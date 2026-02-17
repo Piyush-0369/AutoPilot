@@ -1,0 +1,106 @@
+[
+    {
+        "id": "first-lesson",
+        "title": "First Steps",
+        "description": "Complete your first lesson",
+        "icon": "🎯",
+        "type": "lessons",
+        "requirement": {
+            "type": "lessons",
+            "value": 1
+        },
+        "xpReward": 50,
+        "rarity": "common"
+    },
+    {
+        "id": "week-streak",
+        "title": "Week Warrior",
+        "description": "Maintain a 7-day streak",
+        "icon": "🔥",
+        "type": "streak",
+        "requirement": {
+            "type": "streak",
+            "value": 7
+        },
+        "xpReward": 100,
+        "rarity": "rare"
+    },
+    {
+        "id": "month-streak",
+        "title": "Month Master",
+        "description": "Maintain a 30-day streak",
+        "icon": "🏆",
+        "type": "streak",
+        "requirement": {
+            "type": "streak",
+            "value": 30
+        },
+        "xpReward": 500,
+        "rarity": "epic"
+    },
+    {
+        "id": "level-5",
+        "title": "Rising Star",
+        "description": "Reach level 5",
+        "icon": "⭐",
+        "type": "xp",
+        "requirement": {
+            "type": "xp",
+            "value": 500
+        },
+        "xpReward": 100,
+        "rarity": "rare"
+    },
+    {
+        "id": "level-10",
+        "title": "Language Expert",
+        "description": "Reach level 10",
+        "icon": "🎓",
+        "type": "xp",
+        "requirement": {
+            "type": "xp",
+            "value": 1000
+        },
+        "xpReward": 250,
+        "rarity": "epic"
+    },
+    {
+        "id": "perfect-session",
+        "title": "Perfectionist",
+        "description": "Complete a session with 100% accuracy",
+        "icon": "💯",
+        "type": "perfect-session",
+        "requirement": {
+            "type": "perfect-session",
+            "value": 1
+        },
+        "xpReward": 75,
+        "rarity": "rare"
+    },
+    {
+        "id": "ten-lessons",
+        "title": "Dedicated Learner",
+        "description": "Complete 10 lessons",
+        "icon": "📚",
+        "type": "lessons",
+        "requirement": {
+            "type": "lessons",
+            "value": 10
+        },
+        "xpReward": 150,
+        "rarity": "rare"
+    },
+    {
+        "id": "hundred-streak",
+        "title": "Legendary Streak",
+        "description": "Maintain a 100-day streak",
+        "icon": "👑",
+        "type": "streak",
+        "requirement": {
+            "type": "streak",
+            "value": 100
+        },
+        "xpReward": 1000,
+        "rarity": "legendary"
+    }
+]

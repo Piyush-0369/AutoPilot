@@ -10,4 +10,8 @@ export type RootStackParamList = {
   PronunciationPractice: undefined;
   GrammarPractice: undefined;
   Progress: undefined;
+  Ranking: undefined;
+  Profile: undefined;
+  Welcome: undefined;
+  Transition: { summary: { totalXP: number; accuracy: number; timeSpentMinutes: number; exercisesCompleted: number }; leveledUp?: boolean };
 };

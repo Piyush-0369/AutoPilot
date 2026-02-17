@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RunAnywhere, SDKEnvironment } from '@runanywhere/core';
 import { ModelServiceProvider, registerDefaultModels } from './services/ModelService';
 import { UserProgressProvider } from './services/UserProgressService';
+import { SessionServiceProvider } from './services/SessionService';
 import { AppColors } from './theme';
 import {
   HomeScreen,
@@ -24,6 +25,8 @@ import {
   RankingScreen,
   ProfileScreen,
 } from './screens';
+import { WelcomeScreen } from './screens/WelcomeScreen';
+import { TransitionScreen } from './screens/TransitionScreen';
 import { RootStackParamList } from './navigation/types';
 
 // Using JS-based stack navigator instead of native-stack
@@ -43,7 +46,7 @@ const App: React.FC = () => {
         // Register backends (per docs: https://docs.runanywhere.ai/react-native/quick-start)
         const { LlamaCPP } = await import('@runanywhere/llamacpp');
         const { ONNX } = await import('@runanywhere/onnx');
-        
+
         LlamaCPP.register();
         ONNX.register();
 
@@ -63,94 +66,106 @@ const App: React.FC = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ModelServiceProvider>
         <UserProgressProvider>
-          <StatusBar barStyle="light-content" backgroundColor={AppColors.primaryDark} />
-          <NavigationContainer>
-            <Stack.Navigator
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: AppColors.primaryDark,
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
-                headerTintColor: AppColors.textPrimary,
-                headerTitleStyle: {
-                  fontWeight: '700',
-                  fontSize: 18,
-                },
-                cardStyle: {
-                  backgroundColor: AppColors.primaryDark,
-                },
-                // iOS-like animations
-                ...TransitionPresets.SlideFromRightIOS,
-              }}
-            >
-              <Stack.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Chat"
-                component={ChatScreen}
-                options={{ title: 'Chat' }}
-              />
-              <Stack.Screen
-                name="ToolCalling"
-                component={ToolCallingScreen}
-                options={{ title: 'Tool Calling' }}
-              />
-              <Stack.Screen
-                name="Practice"
-                component={PracticeScreen}
-                options={{ title: 'Practice' }}
-              />
-              <Stack.Screen
-                name="ConversationPractice"
-                component={ConversationPracticeScreen}
-                options={{ title: 'Conversation Practice' }}
-              />
-              <Stack.Screen
-                name="PronunciationPractice"
-                component={PronunciationPracticeScreen}
-                options={{ title: 'Pronunciation Practice' }}
-              />
-              <Stack.Screen
-                name="GrammarPractice"
-                component={GrammarPracticeScreen}
-                options={{ title: 'Grammar Practice' }}
-              />
-              <Stack.Screen
-                name="SpeechToText"
-                component={SpeechToTextScreen}
-                options={{ title: 'Speech to Text' }}
-              />
-              <Stack.Screen
-                name="TextToSpeech"
-                component={TextToSpeechScreen}
-                options={{ title: 'Text to Speech' }}
-              />
-              <Stack.Screen
-                name="VoicePipeline"
-                component={VoicePipelineScreen}
-                options={{ title: 'Voice Pipeline' }}
-              />
-              <Stack.Screen
-                name="Progress"
-                component={ProgressScreen}
-                options={{ title: 'Progress' }}
-              />
-              <Stack.Screen
-                name="Ranking"
-                component={RankingScreen}
-                options={{ title: 'Ranking' }}
-              />
-              <Stack.Screen
-                name="Profile"
-                component={ProfileScreen}
-                options={{ title: 'Profile' }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
+          <SessionServiceProvider>
+            <StatusBar barStyle="light-content" backgroundColor={AppColors.primaryDark} />
+            <NavigationContainer>
+              <Stack.Navigator
+                screenOptions={{
+                  headerStyle: {
+                    backgroundColor: AppColors.primaryDark,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                  },
+                  headerTintColor: AppColors.textPrimary,
+                  headerTitleStyle: {
+                    fontWeight: '700',
+                    fontSize: 18,
+                  },
+                  cardStyle: {
+                    backgroundColor: AppColors.primaryDark,
+                  },
+                  // iOS-like animations
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              >
+                <Stack.Screen
+                  name="Home"
+                  component={HomeScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Chat"
+                  component={ChatScreen}
+                  options={{ title: 'Chat' }}
+                />
+                <Stack.Screen
+                  name="ToolCalling"
+                  component={ToolCallingScreen}
+                  options={{ title: 'Tool Calling' }}
+                />
+                <Stack.Screen
+                  name="Practice"
+                  component={PracticeScreen}
+                  options={{ title: 'Practice' }}
+                />
+                <Stack.Screen
+                  name="ConversationPractice"
+                  component={ConversationPracticeScreen}
+                  options={{ title: 'Conversation Practice' }}
+                />
+                <Stack.Screen
+                  name="PronunciationPractice"
+                  component={PronunciationPracticeScreen}
+                  options={{ title: 'Pronunciation Practice' }}
+                />
+                <Stack.Screen
+                  name="GrammarPractice"
+                  component={GrammarPracticeScreen}
+                  options={{ title: 'Grammar Practice' }}
+                />
+                <Stack.Screen
+                  name="SpeechToText"
+                  component={SpeechToTextScreen}
+                  options={{ title: 'Speech to Text' }}
+                />
+                <Stack.Screen
+                  name="TextToSpeech"
+                  component={TextToSpeechScreen}
+                  options={{ title: 'Text to Speech' }}
+                />
+                <Stack.Screen
+                  name="VoicePipeline"
+                  component={VoicePipelineScreen}
+                  options={{ title: 'Voice Pipeline' }}
+                />
+                <Stack.Screen
+                  name="Progress"
+                  component={ProgressScreen}
+                  options={{ title: 'Progress' }}
+                />
+                <Stack.Screen
+                  name="Ranking"
+                  component={RankingScreen}
+                  options={{ title: 'Ranking' }}
+                />
+                <Stack.Screen
+                  name="Profile"
+                  component={ProfileScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Welcome"
+                  component={WelcomeScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Transition"
+                  component={TransitionScreen}
+                  options={{ headerShown: false }}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </SessionServiceProvider>
         </UserProgressProvider>
       </ModelServiceProvider>
     </GestureHandlerRootView>

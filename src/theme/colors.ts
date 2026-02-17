@@ -4,6 +4,7 @@
  */
 export const AppColors = {
   // Primary gradient colors - Deep space with electric accents
+  primary: '#2F5FED',
   primaryDark: '#0A0E1A',
   primaryMid: '#141B2D',
   surfaceCard: '#1C2438',

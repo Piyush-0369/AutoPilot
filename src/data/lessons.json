@@ -1,0 +1,156 @@
+[
+    {
+        "id": "lesson-001",
+        "title": "Basic Greetings",
+        "description": "Learn how to greet people in Spanish",
+        "difficulty": 1,
+        "skillNode": "greetings",
+        "estimatedMinutes": 5,
+        "learningObjectives": [
+            "Say hello and goodbye",
+            "Ask how someone is",
+            "Respond to greetings"
+        ],
+        "prerequisites": [],
+        "tags": [
+            "beginner",
+            "conversation",
+            "basics"
+        ],
+        "exercises": [
+            {
+                "id": "ex-001",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate to Spanish: Hello",
+                "correctAnswer": "Hola",
+                "sourceLanguage": "en",
+                "targetLanguage": "es",
+                "hints": [
+                    "It starts with 'H'"
+                ]
+            },
+            {
+                "id": "ex-002",
+                "type": "multiple-choice",
+                "difficulty": 1,
+                "prompt": "How do you say 'Good morning' in Spanish?",
+                "correctAnswer": "Buenos días",
+                "options": [
+                    "Buenos días",
+                    "Buenas noches",
+                    "Buenas tardes",
+                    "Hola"
+                ],
+                "correctIndex": 0
+            },
+            {
+                "id": "ex-003",
+                "type": "fill-blank",
+                "difficulty": 1,
+                "prompt": "Fill in the blank",
+                "sentence": "¿Cómo _____ tú?",
+                "correctAnswer": "estás",
+                "blankPosition": 1,
+                "wordBank": [
+                    "estás",
+                    "eres",
+                    "está",
+                    "soy"
+                ],
+                "context": "Asking 'How are you?'"
+            },
+            {
+                "id": "ex-004",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate to Spanish: Goodbye",
+                "correctAnswer": "Adiós",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            },
+            {
+                "id": "ex-005",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate to Spanish: Thank you",
+                "correctAnswer": "Gracias",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            }
+        ],
+        "createdAt": "2026-01-01T00:00:00Z"
+    },
+    {
+        "id": "lesson-002",
+        "title": "Numbers 1-10",
+        "description": "Learn to count from 1 to 10 in Spanish",
+        "difficulty": 1,
+        "skillNode": "basics",
+        "estimatedMinutes": 8,
+        "learningObjectives": [
+            "Count from 1 to 10",
+            "Recognize written numbers",
+            "Use numbers in context"
+        ],
+        "prerequisites": [],
+        "tags": [
+            "beginner",
+            "numbers",
+            "basics"
+        ],
+        "exercises": [
+            {
+                "id": "ex-006",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate: One",
+                "correctAnswer": "Uno",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            },
+            {
+                "id": "ex-007",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate: Two",
+                "correctAnswer": "Dos",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            },
+            {
+                "id": "ex-008",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate: Three",
+                "correctAnswer": "Tres",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            },
+            {
+                "id": "ex-009",
+                "type": "multiple-choice",
+                "difficulty": 1,
+                "prompt": "What is 'five' in Spanish?",
+                "correctAnswer": "Cinco",
+                "options": [
+                    "Cuatro",
+                    "Cinco",
+                    "Seis",
+                    "Siete"
+                ],
+                "correctIndex": 1
+            },
+            {
+                "id": "ex-010",
+                "type": "translation",
+                "difficulty": 1,
+                "prompt": "Translate: Ten",
+                "correctAnswer": "Diez",
+                "sourceLanguage": "en",
+                "targetLanguage": "es"
+            }
+        ],
+        "createdAt": "2026-01-01T00:00:00Z"
+    }
+]

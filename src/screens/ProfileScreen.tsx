@@ -2,98 +2,182 @@ import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
   StatusBar,
-  TouchableOpacity,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/types';
 import { BottomNav } from '../components/BottomNav';
+import { useUserProgress } from '../services/UserProgressService';
+import { AppColors } from '../theme';
+import achievementsData from '../data/achievements.json';
+import { Achievement } from '../types';
 
 type ProfileScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Profile'>;
 };
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({
-  navigation,
-}) => {
+const achievements = achievementsData as Achievement[];
+
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
+  const userProgress = useUserProgress();
+
+  const getRarityColor = (rarity: string) => {
+    if (rarity === 'legendary') return '#8B5CF6';
+    if (rarity === 'epic') return '#EF4444';
+    if (rarity === 'rare') return '#3B82F6';
+    return '#10B981';
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.blueDot} />
-
-        <View style={styles.headerRight}>
-          <View style={styles.statContainer}>
-            <Text>⚡</Text>
-            <Text style={styles.statText}>2850</Text>
-          </View>
-
-          <View style={styles.statContainer}>
-            <Text>🔥</Text>
-            <Text style={styles.statText}>7</Text>
-          </View>
-
-          <Text style={styles.bell}>🔔</Text>
-        </View>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
       {/* CONTENT */}
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* PROFILE HEADER */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>👤</Text>
+        <View style={styles.content}>
+          {/* User Card */}
+          <View style={styles.userCard}>
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>
+                {userProgress.name?.charAt(0).toUpperCase() || '👤'}
+              </Text>
+            </View>
+            <Text style={styles.userName}>
+              {userProgress.name || 'Language Learner'}
+            </Text>
+            <Text style={styles.userLanguage}>
+              Learning {userProgress.targetLanguage || 'Spanish'}
+            </Text>
           </View>
 
-          <Text style={styles.userName}>Aashmeet Singh</Text>
-          <Text style={styles.userSubtitle}>Intermediate Learner</Text>
-        </View>
-
-        {/* STATS */}
-        <View style={styles.statsRow}>
-          <StatBox label="XP" value="2,850" />
-          <StatBox label="Streak" value="7 🔥" />
-          <StatBox label="Rank" value="#5" />
-        </View>
-
-        {/* PROGRESS */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Learning Progress</Text>
-
-          <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>Level 3</Text>
-            <Text style={styles.progressValue}>1247 / 2000 XP</Text>
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>{userProgress.xp}</Text>
+              <Text style={styles.statLabel}>Total XP</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>{userProgress.level}</Text>
+              <Text style={styles.statLabel}>Level</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>{userProgress.streak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>{userProgress.longestStreak}</Text>
+              <Text style={styles.statLabel}>Longest Streak</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>
+                {userProgress.completedLessons.length}
+              </Text>
+              <Text style={styles.statLabel}>Lessons Done</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>
+                {userProgress.totalMinutesLearned}
+              </Text>
+              <Text style={styles.statLabel}>Minutes</Text>
+            </View>
           </View>
 
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '62%' }]} />
+          {/* Achievements */}
+          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={styles.sectionSubtitle}>
+            {userProgress.unlockedAchievements.length} of {achievements.length}{' '}
+            unlocked
+          </Text>
+
+          <View style={styles.achievementsGrid}>
+            {achievements.map((achievement) => {
+              const isUnlocked = userProgress.unlockedAchievements.includes(
+                achievement.id
+              );
+
+              return (
+                <View
+                  key={achievement.id}
+                  style={[
+                    styles.achievementCard,
+                    !isUnlocked && styles.achievementCardLocked,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.achievementIconContainer,
+                      {
+                        backgroundColor:
+                          getRarityColor(achievement.rarity) + '20',
+                      },
+                    ]}
+                  >
+                    <Text style={styles.achievementIcon}>
+                      {achievement.icon}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.achievementTitle,
+                      !isUnlocked && styles.achievementTitleLocked,
+                    ]}
+                  >
+                    {achievement.title}
+                  </Text>
+                  <Text style={styles.achievementDescription}>
+                    {achievement.description}
+                  </Text>
+                  <View
+                    style={[
+                      styles.rarityBadge,
+                      {
+                        backgroundColor:
+                          getRarityColor(achievement.rarity) + '20',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.rarityText,
+                        { color: getRarityColor(achievement.rarity) },
+                      ]}
+                    >
+                      {achievement.rarity}
+                    </Text>
+                  </View>
+                  {!isUnlocked && (
+                    <View style={styles.lockedOverlay}>
+                      <Text style={styles.lockedIcon}>🔒</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
-        </View>
 
-        {/* ACHIEVEMENTS */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Achievements</Text>
-
-          <View style={styles.achievementRow}>
-            <Achievement icon="🏆" label="Top 5 Rank" />
-            <Achievement icon="🔥" label="7-Day Streak" />
-            <Achievement icon="📚" label="Grammar Pro" />
-          </View>
-        </View>
-
-        {/* SETTINGS */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Settings</Text>
-
-          <ProfileOption label="Edit Profile" />
-          <ProfileOption label="Notification Settings" />
-          <ProfileOption label="Language Preferences" />
-          <ProfileOption label="Logout" danger />
+          {/* Settings */}
+          <Text style={styles.sectionTitle}>Settings</Text>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>Daily Goal</Text>
+            <Text style={styles.settingValue}>
+              {userProgress.dailyGoalMinutes} min
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>Target Language</Text>
+            <Text style={styles.settingValue}>
+              {userProgress.targetLanguage || 'Spanish'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 80 }} />
@@ -105,176 +189,212 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   );
 };
 
-/* ---------- Small Components ---------- */
-
-const StatBox = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.statBox}>
-    <Text style={styles.statBoxValue}>{value}</Text>
-    <Text style={styles.statBoxLabel}>{label}</Text>
-  </View>
-);
-
-const Achievement = ({ icon, label }: { icon: string; label: string }) => (
-  <View style={styles.achievementItem}>
-    <Text style={{ fontSize: 24 }}>{icon}</Text>
-    <Text style={styles.achievementLabel}>{label}</Text>
-  </View>
-);
-
-const ProfileOption = ({
-  label,
-  danger,
-}: {
-  label: string;
-  danger?: boolean;
-}) => (
-  <TouchableOpacity style={styles.optionRow}>
-    <Text
-      style={[
-        styles.optionText,
-        danger && { color: '#EF4444' },
-      ]}
-    >
-      {label}
-    </Text>
-    <Text style={{ color: '#9CA3AF' }}>›</Text>
-  </TouchableOpacity>
-);
-
-/* ---------- Styles ---------- */
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA' },
 
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     padding: 20,
     backgroundColor: '#FFF',
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 
-  blueDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#2F5FED',
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
   },
 
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  content: {
+    padding: 20,
   },
 
-  statContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-
-  statText: { fontWeight: '600', marginLeft: 4 },
-  bell: { fontSize: 18 },
-
-  profileHeader: {
-    alignItems: 'center',
+  userCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
-  avatar: {
+  avatarContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: AppColors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
 
-  avatarText: { fontSize: 36 },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 
-  userName: { fontSize: 22, fontWeight: '700' },
-  userSubtitle: { color: '#6B7280', marginTop: 4 },
+  userName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
+    marginBottom: 4,
+  },
 
-  statsRow: {
+  userLanguage: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+  },
+
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
   },
 
   statBox: {
-    backgroundColor: '#FFF',
+    width: '31%',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 12,
-    width: '28%',
-    alignItems: 'center',
-    elevation: 2,
-  },
-
-  statBoxValue: { fontWeight: '700', fontSize: 16 },
-  statBoxLabel: { fontSize: 12, color: '#6B7280' },
-
-  card: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 20,
-    marginBottom: 16,
-    borderRadius: 16,
     padding: 16,
-    elevation: 2,
-  },
-
-  cardTitle: {
-    fontWeight: '700',
-    marginBottom: 12,
-    fontSize: 16,
-  },
-
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  progressLabel: { color: '#6B7280' },
-  progressValue: { fontWeight: '600' },
-
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginTop: 8,
-  },
-
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#2F5FED',
-    borderRadius: 4,
-  },
-
-  achievementRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  achievementItem: {
     alignItems: 'center',
-    width: '30%',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
-  achievementLabel: {
-    fontSize: 12,
-    marginTop: 4,
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: AppColors.primary,
+    marginBottom: 4,
+  },
+
+  statLabel: {
+    fontSize: 11,
+    color: AppColors.textSecondary,
     textAlign: 'center',
   },
 
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: AppColors.textPrimary,
+    marginBottom: 4,
   },
 
-  optionText: {
+  sectionSubtitle: {
+    fontSize: 13,
+    color: AppColors.textSecondary,
+    marginBottom: 16,
+  },
+
+  achievementsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+
+  achievementCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    position: 'relative',
+  },
+
+  achievementCardLocked: {
+    opacity: 0.5,
+  },
+
+  achievementIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  achievementIcon: {
+    fontSize: 24,
+  },
+
+  achievementTitle: {
     fontSize: 14,
     fontWeight: '600',
+    color: AppColors.textPrimary,
+    marginBottom: 4,
+  },
+
+  achievementTitleLocked: {
+    color: AppColors.textSecondary,
+  },
+
+  achievementDescription: {
+    fontSize: 11,
+    color: AppColors.textSecondary,
+    marginBottom: 8,
+  },
+
+  rarityBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+
+  rarityText: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+
+  lockedOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+
+  lockedIcon: {
+    fontSize: 16,
+  },
+
+  settingItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  settingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+  },
+
+  settingValue: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
   },
 });

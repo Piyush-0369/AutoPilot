@@ -1,0 +1,82 @@
+[
+    {
+        "id": "basics",
+        "title": "Basics",
+        "description": "Essential vocabulary and phrases",
+        "icon": "🌱",
+        "prerequisites": [],
+        "lessons": [
+            "lesson-001",
+            "lesson-002"
+        ],
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "category": "foundation"
+    },
+    {
+        "id": "greetings",
+        "title": "Greetings",
+        "description": "Common greetings and introductions",
+        "icon": "👋",
+        "prerequisites": [
+            "basics"
+        ],
+        "lessons": [
+            "lesson-001"
+        ],
+        "position": {
+            "x": -1,
+            "y": 1
+        },
+        "category": "conversation"
+    },
+    {
+        "id": "numbers",
+        "title": "Numbers",
+        "description": "Counting and numbers",
+        "icon": "🔢",
+        "prerequisites": [
+            "basics"
+        ],
+        "lessons": [
+            "lesson-002"
+        ],
+        "position": {
+            "x": 1,
+            "y": 1
+        },
+        "category": "vocabulary"
+    },
+    {
+        "id": "verbs-present",
+        "title": "Present Tense",
+        "description": "Common verbs in present tense",
+        "icon": "⚡",
+        "prerequisites": [
+            "greetings"
+        ],
+        "lessons": [],
+        "position": {
+            "x": 0,
+            "y": 2
+        },
+        "category": "grammar"
+    },
+    {
+        "id": "food",
+        "title": "Food & Dining",
+        "description": "Restaurant vocabulary",
+        "icon": "🍽️",
+        "prerequisites": [
+            "numbers"
+        ],
+        "lessons": [],
+        "position": {
+            "x": 1,
+            "y": 2
+        },
+        "category": "vocabulary"
+    }
+]

@@ -15,6 +15,7 @@ import { useModelService } from '../services/ModelService';
 import { useUserProgress } from '../services/UserProgressService';
 import { ModelLoaderWidget, AudioVisualizer, FeedbackModal } from '../components';
 import { RootStackParamList } from '../navigation/types';
+import { getSTTLocale } from '../types/learningTypes';
 
 type ConversationPracticeScreenProps = {
   // navigation is not used in this screen
@@ -187,14 +188,34 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
     setStatus('Starting...');
     conversationTurnsRef.current = 0;
 
+<<<<<<< Updated upstream
+=======
+    const targetLanguage = userProgress.targetLanguage || 'Spanish';
+    const sttLocale = getSTTLocale(targetLanguage);
+
+    // Use target language for conversation when STT supports it
+    const enhancedPrompt = `${selectedScenario.prompt}.
+    IMPORTANT: The user is learning ${targetLanguage}.
+    Teach the user ${targetLanguage} phrases relevant to the scenario.
+    When the user speaks in ${targetLanguage}, acknowledge their effort.
+    Correct any mistakes gently and explain the grammar.
+    Mix ${targetLanguage} phrases with English explanations.
+    Be encouraging and helpful.`;
+
+>>>>>>> Stashed changes
     try {
       const config: any = {
         silenceDuration: 1.5,
         speechThreshold: 0.1,
         autoPlayTTS: true,
         continuousMode: true,
+<<<<<<< Updated upstream
         language: 'en',
         systemPrompt: selectedScenario.prompt,
+=======
+        language: sttLocale,
+        systemPrompt: enhancedPrompt,
+>>>>>>> Stashed changes
         onEvent: handleVoiceEvent,
       };
       

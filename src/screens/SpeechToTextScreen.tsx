@@ -14,6 +14,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RunAnywhere } from '@runanywhere/core';
 import { AppColors } from '../theme';
 import { useModelService } from '../services/ModelService';
+import { useUserProgress } from '../services/UserProgressService';
+import { getSTTLocale } from '../types/learningTypes';
 import { ModelLoaderWidget, AudioVisualizer } from '../components';
 
 // Native Audio Module - records in WAV format (16kHz mono) optimal for Whisper STT
@@ -21,6 +23,7 @@ const { NativeAudioModule } = NativeModules;
 
 export const SpeechToTextScreen: React.FC = () => {
   const modelService = useModelService();
+  const userProgress = useUserProgress();
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcription, setTranscription] = useState('');
@@ -135,9 +138,13 @@ export const SpeechToTextScreen: React.FC = () => {
 
       // Transcribe using base64 audio data directly from native module
       console.warn('[STT] Starting transcription...');
+      // Use target language locale for STT instead of hardcoded English
+      const sttLanguage = getSTTLocale(userProgress.targetLanguage || 'en');
+      console.warn('[STT] Using STT language:', sttLanguage, 'for target:', userProgress.targetLanguage);
+
       const transcribeResult = await RunAnywhere.transcribe(audioBase64, {
         sampleRate: 16000,
-        language: 'en',
+        language: sttLanguage,
       });
 
       console.warn('[STT] Transcription result:', transcribeResult);

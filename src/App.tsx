@@ -27,6 +27,9 @@ import {
 } from './screens';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { TransitionScreen } from './screens/TransitionScreen';
+import { LessonScreen } from './screens/LessonScreen';
+import { LessonRoadmapScreen } from './screens/LessonRoadmapScreen';
+import { ReviewSessionScreen } from './screens/ReviewSessionScreen';
 import { RootStackParamList } from './navigation/types';
 
 // Using JS-based stack navigator instead of native-stack
@@ -161,6 +164,21 @@ const App: React.FC = () => {
                 <Stack.Screen
                   name="Transition"
                   component={TransitionScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Lesson"
+                  component={LessonScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="LessonRoadmap"
+                  component={LessonRoadmapScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="ReviewSession"
+                  component={ReviewSessionScreen}
                   options={{ headerShown: false }}
                 />
               </Stack.Navigator>

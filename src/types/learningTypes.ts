@@ -136,6 +136,36 @@ export interface GrammarExample {
     breakdown: string;           // Word-by-word
 }
 
+// --- Conversation Mode ---
+export type ConversationMode = 'formal' | 'casual' | 'professional';
+
+// --- Conversation Stage Names ---
+export type ConversationStageName = 'warm-up' | 'guided' | 'challenge' | 'natural-flow' | 'wrap-up';
+
+// --- Conversation Stage ---
+export interface ConversationStage {
+    name: ConversationStageName;
+    label: string;
+    description: string;
+    suggestedTurns: number;        // How many turns this stage should last
+    objectives: string[];          // What user should accomplish in this stage
+    coachingIntensity: 'high' | 'medium' | 'low';  // How much help AI provides
+    systemPromptOverride?: string; // Additional prompt instructions for this stage
+}
+
+// --- Error Category ---
+export type ErrorCategory =
+    | 'tense'
+    | 'word-order'
+    | 'missing-particle'
+    | 'conjugation'
+    | 'gender-agreement'
+    | 'formality'
+    | 'vocabulary'
+    | 'pronunciation'
+    | 'spelling'
+    | 'other';
+
 // --- Scenario (for conversation mode) ---
 export interface LearningScenario {
     id: string;
@@ -148,6 +178,57 @@ export interface LearningScenario {
     systemPrompt: string;        // For LLM conversation
     objectives: string[];
     suggestedResponses: string[];
+    // --- Enhanced fields ---
+    conversationMode: ConversationMode;
+    stages: ConversationStage[];
+    prerequisiteLessonIds: string[];  // Lessons required before unlock
+    estimatedMinutes: number;
+    maxTurns: number;
+    aiPersonality: string;           // e.g., 'friendly waiter', 'formal clerk'
+    contextDescription: string;      // Scene-setting narrative for the user
+}
+
+// --- Per-Turn Feedback ---
+export interface ConversationTurnFeedback {
+    turnIndex: number;
+    userText: string;
+    aiResponse: string;
+    pronunciationScore: number;       // 0-100
+    grammarScore: number;             // 0-100
+    vocabularyScore: number;          // 0-100
+    isGrammarCorrect: boolean;
+    errorCategory?: ErrorCategory;
+    correction?: string;              // Corrected version of user's sentence
+    explanation?: string;             // Brief grammar/vocab explanation
+    suggestedAlternative?: string;    // Better way to say it
+    vocabularyUsed: string[];         // Vocab IDs the user successfully used
+    vocabularyMissed: string[];       // Vocab IDs the user should have used
+    stageName: ConversationStageName;
+}
+
+// --- Session Report ---
+export interface ConversationSessionReport {
+    scenarioId: string;
+    languageCode: string;
+    startedAt: string;
+    completedAt: string;
+    totalTurns: number;
+    objectivesCompleted: string[];
+    objectivesTotal: string[];
+    // Aggregate scores (0-100)
+    fluencyScore: number;
+    grammarScore: number;
+    vocabularyScore: number;
+    confidenceScore: number;         // Based on response time and self-corrections
+    overallScore: number;
+    // Detailed breakdown
+    turnFeedback: ConversationTurnFeedback[];
+    errorBreakdown: Record<ErrorCategory, number>;   // Count per error type
+    weakVocabulary: string[];        // Vocab IDs to feed back into SRS
+    strongVocabulary: string[];      // Vocab IDs user used well
+    xpEarned: number;
+    stageReached: ConversationStageName;
+    conversationMode: ConversationMode;
 }
 
 // --- User Performance Tracking ---

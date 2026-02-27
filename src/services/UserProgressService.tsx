@@ -11,6 +11,7 @@ interface UserContextType extends User {
   completeLesson: (lessonId: string) => Promise<void>;
   unlockAchievement: (achievementId: string) => Promise<void>;
   updateSkillNode: (nodeId: string, status: SkillNodeStatus) => Promise<void>;
+  completeConversation: (xp: number, accuracy: number) => Promise<void>;
   resetUser: () => Promise<void>;
   setUser: (user: Partial<User>) => Promise<void>;
   loadUser: () => Promise<void>;
@@ -135,6 +136,14 @@ export const UserProgressProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await saveUser(newUser);
   }, [user, saveUser]);
 
+  const completeConversation = useCallback(async (xp: number, accuracy: number) => {
+    const newUser = { ...user };
+    newUser.xp += xp;
+    newUser.level = calculateLevel(newUser.xp);
+    newUser.updatedAt = new Date().toISOString();
+    await saveUser(newUser);
+  }, [user, saveUser]);
+
   const setUser = useCallback(async (updates: Partial<User>) => {
     const newUser = {
       ...user,
@@ -164,6 +173,7 @@ export const UserProgressProvider: React.FC<{ children: React.ReactNode }> = ({ 
     completeLesson,
     unlockAchievement,
     updateSkillNode,
+    completeConversation,
     resetUser,
     setUser,
     loadUser,

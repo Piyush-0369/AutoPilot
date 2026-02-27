@@ -158,6 +158,51 @@ class LearningPathServiceClass {
         return getScenariosForLanguage(langCode);
     }
 
+    /**
+     * Get scenarios that the user has unlocked (prerequisite lessons completed).
+     */
+    async getUnlockedScenarios(userId: string, langCode: string): Promise<{
+        unlocked: LearningScenario[];
+        locked: LearningScenario[];
+    }> {
+        const allScenarios = this.getScenariosForLanguage(langCode);
+        const progress = await this.getLessonProgress(userId);
+
+        const unlocked: LearningScenario[] = [];
+        const locked: LearningScenario[] = [];
+
+        for (const scenario of allScenarios) {
+            const prereqs = scenario.prerequisiteLessonIds || [];
+            const allMet = prereqs.every(lessonId => progress[lessonId]?.isCompleted === true);
+
+            if (prereqs.length === 0 || allMet) {
+                unlocked.push(scenario);
+            } else {
+                locked.push(scenario);
+            }
+        }
+
+        return { unlocked, locked };
+    }
+
+    /**
+     * Record conversation session result — persists scores and feeds weak vocab into SRS.
+     */
+    async recordConversationResult(
+        userId: string,
+        scenarioId: string,
+        report: { weakVocabulary: string[]; strongVocabulary: string[]; overallScore: number }
+    ): Promise<void> {
+        // Feed weak vocabulary back into SRS system
+        for (const vocabId of report.weakVocabulary) {
+            await this.recordWordResult(userId, vocabId, '', false);
+        }
+        // Reinforce strong vocabulary
+        for (const vocabId of report.strongVocabulary) {
+            await this.recordWordResult(userId, vocabId, '', true);
+        }
+    }
+
     // ----------------------------------------------------------
     // LESSON PROGRESS
     // ----------------------------------------------------------

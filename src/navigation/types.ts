@@ -21,8 +21,6 @@ export type RootStackParamList = {
   VocabularyNotebook: undefined;
   ProgressAnalytics: undefined;
 };
-<<<<<<< Updated upstream
-=======
 
 export interface UserProfile {
   id: string;
@@ -37,4 +35,3 @@ export const STORAGE_KEYS = {
   SETUP_COMPLETE: '@setup_complete',
   USER_PROFILE: '@user_profile',
 } as const;
->>>>>>> Stashed changes

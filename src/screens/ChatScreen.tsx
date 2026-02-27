@@ -63,19 +63,27 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
       const lang = targetLanguage || 'Spanish';
       const userName = name || 'User';
 
-      const systemPrompt = `You are a helpful and patient Language Tutor teaching ${lang} to ${userName}.
-      Your goal is to help them practice and improve.
-      - Correct their mistakes gently but clearly.
-      - Suggest better vocabulary and alternative phrasings.
-      - Keep the conversation engaging in ${lang}, but explain complex concepts in English if they struggle.
-      - Adjust your language complexity to their level.
-      - If asked to roleplay, stay in character.`;
+      const systemInstructions = `You are a helpful and patient Language Tutor teaching ${lang} to ${userName}.
+Your goal is to help them practice and improve.
+- Correct their mistakes gently but clearly.
+- Suggest better vocabulary and alternative phrasings.
+- Keep the conversation engaging in ${lang}, but explain complex concepts in English if they struggle.
+- Adjust your language complexity to their level.
+- If asked to roleplay, stay in character.`;
 
-      // Per docs: https://docs.runanywhere.ai/react-native/quick-start#6-stream-responses
-      const streamResult = await RunAnywhere.generateStream(text, {
-        maxTokens: 512, // Increased for better explanations
-        temperature: 0.7,
-        systemPrompt: systemPrompt,
+      let chatLog = '';
+      // Include up to 4 previous messages for context
+      messages.slice(-4).forEach(msg => {
+        if (!msg.isError && !msg.wasCancelled) {
+          chatLog += `${msg.isUser ? 'User' : 'Tutor'}: ${msg.text}\n`;
+        }
+      });
+      chatLog += `User: ${text}\nTutor:`;
+
+      const streamResult = await RunAnywhere.generateStream(chatLog, {
+        maxTokens: 512,
+        temperature: 0.5,
+        systemPrompt: systemInstructions,
       });
 
       streamCancelRef.current = streamResult.cancel;
@@ -104,8 +112,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
         text: cleanFinalText,
         isUser: false,
         timestamp: new Date(),
-        tokensPerSecond: finalResult.performanceMetrics?.tokensPerSecond,
-        totalTokens: finalResult.performanceMetrics?.totalTokens,
+        tokensPerSecond: (finalResult as any).performanceMetrics?.tokensPerSecond,
+        totalTokens: (finalResult as any).performanceMetrics?.totalTokens,
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setCurrentResponse('');

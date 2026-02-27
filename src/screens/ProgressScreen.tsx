@@ -81,126 +81,89 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation }) =>
     }
   };
 
+  const layers = Array.from(new Set(skillNodes.map(n => n.position?.y || 0))).sort((a,b) => a-b);
+  const [activeTab, setActiveTab] = React.useState('Grammar');
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Progress</Text>
+        <Text style={styles.headerTitle}>Skill Tree</Text>
       </View>
 
       {/* CONTENT */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Stats Cards */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{progressPercent}%</Text>
-              <Text style={styles.statLabel}>Overall Progress</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{masteredCount}</Text>
-              <Text style={styles.statLabel}>Skills Mastered</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{userProgress.totalMinutesLearned}</Text>
-              <Text style={styles.statLabel}>Hours Learned</Text>
-            </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* TABS */}
+        <View style={styles.tabsContainer}>
+          {['Grammar', 'Vocabulary', 'Speaking'].map(tab => (
+            <TouchableOpacity 
+              key={tab} 
+              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* PROGRESS */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressRow}>
+            <Text style={styles.progressTitle}>Overall Progress</Text>
+            <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View>
+          <View style={styles.progressBarBg}>
+             <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+          </View>
+          <View style={styles.progressStats}>
+            <Text style={styles.progressStatText}>{masteredCount} of {totalNodes} skills mastered</Text>
+            <Text style={styles.progressStatXp}>⚡ {userProgress.xp} XP</Text>
+          </View>
+        </View>
 
-          {/* Skill Tree */}
-          <Text style={styles.sectionTitle}>Skill Tree</Text>
-
-          {skillNodes.map((node) => {
-            const status = getNodeStatus(node.id);
-            const isLocked = status === 'locked';
-
-            return (
-
-              <TouchableOpacity
-                key={node.id}
-                activeOpacity={0.8}
-                onPress={() => handleNodePress(node.id, status, node.prerequisites)}
-                style={[
-                  styles.skillNode,
-                  isLocked && styles.skillNodeLocked,
-                ]}
-              >
-                <View style={styles.skillNodeHeader}>
-                  <View
-                    style={[
-                      styles.skillIconContainer,
-                      { backgroundColor: getStatusColor(status) + '20' },
-                    ]}
-                  >
-                    <Text style={styles.skillIcon}>{node.icon}</Text>
-                    {status === 'locked' && (
-                      <View style={styles.lockOverlay}>
-                        <Text style={styles.lockIcon}>🔒</Text>
+        {/* TREE */}
+        <View style={styles.treeContainer}>
+           <View style={styles.treeLine} />
+           {layers.map((layer) => {
+             const nodesInLayer = skillNodes.filter(n => (n.position?.y || 0) === layer).sort((a,b) => (a.position?.x || 0) - (b.position?.x || 0));
+             return (
+               <View key={`layer-${layer}`} style={styles.layerRow}>
+                 {nodesInLayer.map((node) => {
+                    const status = getNodeStatus(node.id);
+                    const isLocked = status === 'locked';
+                    const isActive = status === 'in-progress';
+                    const isMastered = status === 'mastered';
+                    
+                    const nodeColor = isMastered ? AppColors.primary : isActive ? AppColors.primaryMid : '#E5E7EB';
+                    
+                    return (
+                      <View key={node.id} style={styles.nodeWrapper}>
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleNodePress(node.id, status, node.prerequisites)}
+                          style={[
+                            styles.nodeCircle, 
+                            { backgroundColor: nodeColor, borderColor: isActive ? AppColors.primaryLight : '#FFF' },
+                            isActive && styles.nodeCircleActive
+                          ]}
+                        >
+                          {isMastered ? (
+                            <Text style={styles.nodeIconWhite}>✓</Text>
+                          ) : isLocked ? (
+                            <Text style={styles.nodeIcon}>🔒</Text>
+                          ) : (
+                            <Text style={styles.nodeIconWhite}>{node.icon || 'star'}</Text>
+                          )}
+                        </TouchableOpacity>
+                        <Text style={[styles.nodeTitle, isLocked && styles.nodeTitleLocked]}>{node.title}</Text>
                       </View>
-                    )}
-                    {status !== 'locked' && (
-                      <Text style={styles.statusIcon}>
-                        {getStatusIcon(status)}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.skillInfo}>
-                    <Text
-                      style={[
-                        styles.skillTitle,
-                        isLocked && styles.skillTitleLocked,
-                      ]}
-                    >
-                      {node.title}
-                    </Text>
-                    <Text style={styles.skillDescription}>
-                      {node.description}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.footerRow}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: getStatusColor(status) + '20' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: getStatusColor(status) },
-                      ]}
-                    >
-                      {status === 'mastered'
-                        ? 'Mastered'
-                        : status === 'in-progress'
-                          ? 'In Progress'
-                          : 'Tap to Unlock'}
-                    </Text>
-                  </View>
-
-                  {/* Action Button */}
-                  {!isLocked && (
-                    <View style={styles.actionButton}>
-                      <Text style={styles.actionButtonText}>
-                        {status === 'mastered' ? 'Practice' : 'Start'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {node.prerequisites.length > 0 && isLocked && (
-                  <Text style={styles.prerequisiteText}>
-                    Requires: {node.prerequisites.map(p => skillNodes.find(n => n.id === p)?.title || p).join(', ')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-
-          })}
+                    );
+                 })}
+               </View>
+             );
+           })}
         </View>
 
         <View style={{ height: 80 }} />
@@ -219,169 +182,187 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#FFF',
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
 
   headerTitle: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
     color: AppColors.primaryDark,
   },
-
-  content: {
-    padding: 20,
+  
+  scrollContent: {
+    paddingBottom: 40,
   },
 
-  statsRow: {
+  tabsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-
-  statCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    justifyContent: 'space-around',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    marginBottom: 20,
   },
-
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: AppColors.primary,
-    marginBottom: 4,
+  
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
-
-  statLabel: {
-    fontSize: 11,
+  
+  activeTab: {
+    backgroundColor: AppColors.primary + '15',
+  },
+  
+  tabText: {
     color: AppColors.textSecondary,
-    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 14,
   },
 
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: AppColors.primaryDark,
-    marginBottom: 16,
+  activeTabText: {
+    color: AppColors.primary,
   },
-
-  skillNode: {
-    backgroundColor: '#FFFFFF',
+  
+  progressSection: {
+    marginHorizontal: 20,
+    backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 30,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
   },
-
-  skillNodeLocked: {
-    opacity: 0.6,
-  },
-
-  skillNodeHeader: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-
-  skillIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    position: 'relative',
-  },
-
-  skillIcon: {
-    fontSize: 28,
-  },
-
-  statusIcon: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    fontSize: 16,
-  },
-
-  lockOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  lockIcon: {
-    fontSize: 20,
-  },
-
-  footerRow: {
+  
+  progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-
-  actionButton: {
-    backgroundColor: AppColors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-
-  actionButtonText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  skillInfo: {
-    flex: 1,
-  },
-
-  skillTitle: {
+  
+  progressTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: AppColors.primaryDark,
-    marginBottom: 4,
+  },
+  
+  progressPercent: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: AppColors.primary,
   },
 
-  skillTitleLocked: {
-    color: AppColors.textSecondary,
+  progressBarBg: {
+    height: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 5,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
 
-  skillDescription: {
-    fontSize: 13,
-    color: AppColors.textSecondary,
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: AppColors.primary,
+    borderRadius: 5,
   },
 
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginBottom: 8,
+  progressStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
-  statusText: {
+  progressStatText: {
     fontSize: 12,
-    fontWeight: '600',
+    color: AppColors.textSecondary,
+  },
+  
+  progressStatXp: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#F59E0B',
   },
 
-  prerequisiteText: {
-    fontSize: 11,
+  treeContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    position: 'relative',
+  },
+
+  treeLine: {
+    position: 'absolute',
+    top: 20,
+    bottom: 40,
+    width: 6,
+    backgroundColor: '#E5E7EB',
+    left: '50%',
+    marginLeft: -3,
+    zIndex: -1,
+  },
+
+  layerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 60,
+    marginBottom: 50,
+    width: '100%',
+  },
+
+  nodeWrapper: {
+    alignItems: 'center',
+  },
+
+  nodeCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    borderWidth: 5,
+    borderColor: '#FFF',
+  },
+
+  nodeCircleActive: {
+    borderWidth: 6,
+    transform: [{ scale: 1.1 }],
+    elevation: 8,
+  },
+
+  nodeIconWhite: {
+    fontSize: 32,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+
+  nodeIcon: {
+    fontSize: 32,
+  },
+
+  nodeTitle: {
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '700',
+    color: AppColors.primaryDark,
+  },
+  
+  nodeTitleLocked: {
     color: AppColors.textSecondary,
-    fontStyle: 'italic',
   },
 });

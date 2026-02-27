@@ -22,41 +22,21 @@ export interface PracticeSession {
 }
 
 const EXERCISE_PROMPTS = {
-  typing: (lang: string, difficulty: number) =>
-    `Generate a language learning exercise for ${lang} at difficulty ${difficulty}/5. 
-    Focus on vocabulary translation. Provide a JSON object with keys: question, answer, hint, category.
-    - question: A clear instruction like "Translate to [language]: [English phrase]"
-    - answer: The correct translation
-    - hint: A helpful hint for beginners
-    - category: One of "greetings", "numbers", "food", "travel", "daily-routines", "emotions"
-    Respond with ONLY valid JSON, no other text.`,
+  typing: (lang: string, difficulty: number, topic?: string) =>
+    `Generate a translation exercise for ${lang}. Difficulty: ${difficulty}/5. Theme: ${topic || 'General'}.
+Respond with ONLY valid JSON: {"question": "Translate: Hello", "answer": "Bonjour", "hint": "Greeting", "category": "greetings"}`,
 
-  tts: (lang: string, difficulty: number) =>
-    `Generate a language learning speaking exercise for ${lang} at difficulty ${difficulty}/5.
-    Focus on pronunciation and speaking. Provide a JSON object with keys: question, answer, hint, category.
-    - question: A phrase the user should speak aloud in ${lang}
-    - answer: The phrase in ${lang} (for comparison)
-    - hint: A brief tip about pronunciation
-    - category: One of "greetings", "numbers", "food", "travel", "daily-routines", "emotions"
-    Respond with ONLY valid JSON, no other text.`,
+  tts: (lang: string, difficulty: number, topic?: string) =>
+    `Generate a speaking exercise for ${lang}. Difficulty: ${difficulty}/5. Theme: ${topic || 'General'}.
+Respond with ONLY valid JSON: {"question": "Say: Thank you", "answer": "Merci", "hint": "Polite", "category": "greetings"}`,
 
-  stt: (lang: string, difficulty: number) =>
-    `Generate a language learning listening exercise for ${lang} at difficulty ${difficulty}/5.
-    Focus on comprehension and dictation. Provide a JSON object with keys: question, answer, hint, category.
-    - question: Tell the user to listen and type what they hear (in English)
-    - answer: A simple phrase in ${lang} they should transcribe
-    - hint: A clue about what they'll hear
-    - category: One of "greetings", "numbers", "food", "travel", "daily-routines", "emotions"
-    Respond with ONLY valid JSON, no other text.`,
+  stt: (lang: string, difficulty: number, topic?: string) =>
+    `Generate a listening exercise for ${lang}. Difficulty: ${difficulty}/5. Theme: ${topic || 'General'}.
+Respond with ONLY valid JSON: {"question": "Type what you hear", "answer": "Oui", "hint": "Yes", "category": "basics"}`,
 
-  written: (lang: string, difficulty: number) =>
-    `Generate a language learning writing exercise for ${lang} at difficulty ${difficulty}/5.
-    Focus on sentence construction. Provide a JSON object with keys: question, answer, hint, category.
-    - question: A prompt asking the user to write something in ${lang}
-    - answer: An example correct response
-    - hint: Grammar structure hint
-    - category: One of "greetings", "numbers", "food", "travel", "daily-routines", "emotions"
-    Respond with ONLY valid JSON, no other text.`,
+  written: (lang: string, difficulty: number, topic?: string) =>
+    `Generate a writing exercise for ${lang}. Difficulty: ${difficulty}/5. Theme: ${topic || 'General'}.
+Respond with ONLY valid JSON: {"question": "Write about food", "answer": "J'aime la pizza", "hint": "Food", "category": "food"}`,
 };
 
 class AIPracticeService {
@@ -66,22 +46,18 @@ class AIPracticeService {
   async generateExercise(
     type: DailyExerciseType,
     targetLanguage: string = 'Spanish',
-    difficulty?: number
+    difficulty?: number,
+    topic?: string
   ): Promise<AIExercise> {
     const diff = difficulty || this.currentDifficulty;
 
-    // MVP: Use hardcoded exercises for French
-    if (targetLanguage === 'French') {
-      return this.getFallbackExercise(type, targetLanguage);
-    }
-
     try {
-      const prompt = EXERCISE_PROMPTS[type](targetLanguage, diff);
+      const prompt = EXERCISE_PROMPTS[type](targetLanguage, diff, topic);
 
       const result = await RunAnywhere.generate(prompt, {
-        maxTokens: 300,
-        temperature: 0.7,
-        systemPrompt: 'You are a language learning AI. Respond with VALID JSON only. Do not include thinking process or other text.',
+        maxTokens: 150,
+        temperature: 0.1,
+        systemPrompt: 'You are a JSON API. You MUST output ONLY raw valid JSON strings without markdown or explanations.',
       });
 
       const parsed = this.parseJSONResponse(result.text);
@@ -103,10 +79,76 @@ class AIPracticeService {
     return this.getFallbackExercise(type, targetLanguage);
   }
 
+  async generateMockPracticeSet(
+    targetLanguage: string = 'Spanish',
+    count: number = 3,
+    includeTypes?: DailyExerciseType[],
+    topic?: string
+  ): Promise<AIExercise[]> {
+    const langLower = targetLanguage.toLowerCase();
+
+    // Core dictionaries for common supported languages
+    const dicts: Record<string, Record<string, string>> = {
+      spanish: { hello: 'Hola', goodbye: 'Adiós', thanks: 'Gracias', sentence: 'Me gusta aprender' },
+      french: { hello: 'Bonjour', goodbye: 'Au revoir', thanks: 'Merci', sentence: "J'aime apprendre" },
+      german: { hello: 'Hallo', goodbye: 'Tschüss', thanks: 'Danke', sentence: 'Ich lerne gerne' },
+      italian: { hello: 'Ciao', goodbye: 'Arrivederci', thanks: 'Grazie', sentence: 'Mi piace imparare' },
+      japanese: { hello: 'Konnichiwa', goodbye: 'Sayonara', thanks: 'Arigatou', sentence: 'Watashi wa manabu no ga suki desu' },
+      korean: { hello: 'Annyeonghaseyo', goodbye: 'Annyeonghi gaseyo', thanks: 'Gamsahamnida', sentence: 'Naneun baeuneun geoseul joahaeyo' },
+      portuguese: { hello: 'Olá', goodbye: 'Tchau', thanks: 'Obrigado', sentence: 'Eu gosto de aprender' },
+    };
+
+    const dict = dicts[langLower] || {
+      hello: `[Hello in ${targetLanguage}]`,
+      goodbye: `[Goodbye in ${targetLanguage}]`,
+      thanks: `[Thanks in ${targetLanguage}]`,
+      sentence: `[Sentence about ${topic || 'learning'} in ${targetLanguage}]`
+    };
+
+    const mockExercises: AIExercise[] = [
+      {
+        question: `Translate to ${targetLanguage}: Hello`,
+        answer: dict.hello,
+        type: 'typing',
+        difficulty: 1,
+        category: 'lesson_mock',
+        hint: `Common greeting in ${targetLanguage}`
+      },
+      {
+        question: `Say in ${targetLanguage}: Thank you`,
+        answer: dict.thanks,
+        type: 'tts',
+        difficulty: 1,
+        category: 'lesson_mock',
+        hint: `Polite expression in ${targetLanguage}`
+      },
+      {
+        question: `Write a sentence about ${topic || 'learning'} in ${targetLanguage}`,
+        answer: dict.sentence,
+        type: 'written',
+        difficulty: 1,
+        category: 'lesson_mock',
+        hint: `Use basic ${targetLanguage} grammar`
+      },
+      {
+        question: `Listen and type: ${dict.goodbye}`,
+        answer: dict.goodbye,
+        type: 'stt',
+        difficulty: 1,
+        category: 'lesson_mock',
+        hint: `Farewell in ${targetLanguage}`
+      }
+    ];
+
+    // Return the required number of mock exercises
+    return mockExercises.slice(0, count);
+  }
+
   async generatePracticeSet(
     targetLanguage: string = 'Spanish',
     count: number = 4,
-    includeTypes?: DailyExerciseType[]
+    includeTypes?: DailyExerciseType[],
+    topic?: string
   ): Promise<AIExercise[]> {
     const types: DailyExerciseType[] = includeTypes || ['typing', 'tts', 'stt', 'written'];
     const exercises: AIExercise[] = [];
@@ -114,7 +156,7 @@ class AIPracticeService {
     const difficulty = this.currentDifficulty;
 
     for (let i = 0; i < Math.min(count, types.length); i++) {
-      const exercise = await this.generateExercise(types[i], targetLanguage, difficulty);
+      const exercise = await this.generateExercise(types[i], targetLanguage, difficulty, topic);
       exercises.push(exercise);
     }
 
@@ -227,28 +269,42 @@ class AIPracticeService {
 
   private parseJSONResponse(text: string): any | null {
     try {
-      // 1. Remove <think> blocks if present
       let cleanText = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
-      // 2. Remove markdown code fences (```json ... ```) 
-      // This regex matches ```json (content) ``` or just ``` (content) ```
-      const codeFenceMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeFenceMatch) {
-        cleanText = codeFenceMatch[1];
+      const firstBrace = cleanText.indexOf('{');
+      const firstCloseBrace = cleanText.indexOf('}', firstBrace);
+
+      if (firstBrace !== -1) {
+        let possibleJson = '';
+
+        if (firstCloseBrace !== -1) {
+          // Grab only the FIRST JSON object in case it hallucinated multiple
+          possibleJson = cleanText.substring(firstBrace, firstCloseBrace + 1);
+        } else {
+          // Truncated JSON recovery
+          let salvaged = cleanText.substring(firstBrace);
+          salvaged = salvaged.replace(/,\s*"?[^"]*$/, ''); // Strip broken trailing properties
+          if (!salvaged.endsWith('}')) {
+            if (salvaged.endsWith('"')) salvaged += '}';
+            else salvaged += '"}';
+          }
+          possibleJson = salvaged;
+        }
+
+        // Clean up common LLM format errors
+        possibleJson = possibleJson.replace(/,\s*}/g, '}'); // Remove trailing commas
+        possibleJson = possibleJson.replace(/'([^']+)'\s*:/g, '"$1":'); // Fix single-quoted keys
+        possibleJson = possibleJson.replace(/:\s*'([^']+)'/g, ': "$1"'); // Fix single-quoted values
+
+        try {
+          return JSON.parse(possibleJson);
+        } catch (e: any) {
+          console.log("Failed to parse JSON", possibleJson, "Error:", e?.message);
+        }
       }
 
-      // 3. Find the first valid JSON object
-      // Using a regex to find the outermost curly braces
-      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-
-      // Fallback: Try parsing the whole text if it looks like JSON
-      return JSON.parse(cleanText);
-
-    } catch (error) {
-      console.error('JSON parsing error:', error);
+    } catch (error: any) {
+      console.warn('JSON parsing warning:', error?.message || 'Failed to parse');
       console.log('Raw text was:', text); // Debug log
     }
     return null;

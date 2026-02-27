@@ -41,7 +41,7 @@ export interface Lesson {
     difficulty: number
     skillNode: string
     estimatedMinutes: number
-    exercises: Exercise[]
+    exercises: Record<string, any[]> // Update to dictionary for dynamic multi-language mockup data
     learningObjectives: string[]
     prerequisites: string[]
     tags: string[]

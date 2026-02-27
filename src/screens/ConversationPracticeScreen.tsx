@@ -146,19 +146,30 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
     }
 
     setIsActive(true);
-    setConversation([]);
+    setConversation([
+      {
+        role: 'assistant',
+        text: `🎭 ROLEPLAY SCENARIO:\n${selectedScenario.prompt}\n\nLanguage: ${userProgress.targetLanguage || 'Spanish'}\n\nI'll start listening now. When you're ready, read the scenario and say "Hello" to kick off the simulation!`,
+        timestamp: new Date(),
+      }
+    ]);
     setStatus('Starting...');
     conversationTurnsRef.current = 0;
 
     const targetLanguage = userProgress.targetLanguage || 'Spanish';
 
-    // Customize prompt to handle language limitations (English models)
-    const enhancedPrompt = `${selectedScenario.prompt}. 
-    IMPORTANT: The user is learning ${targetLanguage}. 
-    Since your voice and hearing are currently tuned to English, conduct the conversation mainly in English.
-    Teach the user ${targetLanguage} phrases relevant to the scenario. 
-    Ask them to repeat phrases, but acknowledge that you might not hear non-English words perfectly.
-    Be encouraging and helpful.`;
+    // Customize prompt to explicitly enforce character roleplay and guidance
+    const enhancedPrompt = `You are a highly dynamic roleplay actor leading a conversational simulation to teach the user ${targetLanguage}.
+
+SCENARIO CONTEXT:
+${selectedScenario.prompt}
+
+YOUR RULES FOR THIS SIMULATION:
+1. STAY IN CHARACTER: Act exactly as the persona described in the scenario (e.g., a waiter, a ticket agent).
+2. SET THE SCENE & INSTRUCT: Acknowledge the user, describe the setting briefly, and explicitly tell the user what they need to practice saying. 
+3. TEACH ACTIVELY: Since your voice is primarily English, speak English but frequently introduce ${targetLanguage} phrases. Ask the user to repeat them or use them.
+4. BE DYNAMIC: React naturally to whatever the user says. Give gentle corrections if they struggle.
+5. KEEP THE BALL BOUNCING: Always end your turn with a direct question or a clear instruction on what the user should try saying next to keep the roleplay moving.`;
 
     try {
       const config: any = {

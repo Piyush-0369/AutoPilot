@@ -67,14 +67,64 @@ export const GrammarPracticeScreen: React.FC<GrammarPracticeScreenProps> = ({
   const modelService = useModelService();
   const userProgress = useUserProgress();
 
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [currentExercise, setCurrentExercise] = useState({ prompt: 'Loading...', example: '...', difficulty: 'Loading' });
+  const [exerciseCount, setExerciseCount] = useState(1);
   const [userResponse, setUserResponse] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoadingExercise, setIsLoadingExercise] = useState(true);
   const [feedback, setFeedback] = useState<GrammarFeedback | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
 
-  const currentExercise = GRAMMAR_EXERCISES[currentExerciseIndex];
+  const loadDynamicExercise = useCallback(async () => {
+    setIsLoadingExercise(true);
+    try {
+      if (!modelService.isLLMLoaded) return;
+      const lang = userProgress.targetLanguage || 'English';
+      const prompt = `Generate a grammar practice exercise for learning ${lang}.
+Provide a JSON object with strictly these keys: prompt, example, difficulty.
+- prompt: An instruction like "Write a sentence in past tense"
+- example: A valid example answer in ${lang}
+- difficulty: "Beginner", "Intermediate", or "Advanced"
+
+Example:
+{
+  "prompt": "Write a sentence in past tense",
+  "example": "I went to the store yesterday",
+  "difficulty": "Beginner"
+}
+\`\`\`json
+{`;
+
+      const result = await RunAnywhere.generate(prompt, {
+        maxTokens: 150,
+        temperature: 0.2,
+        systemPrompt: "You are a JSON API. You MUST output ONLY raw valid JSON. Do not include markdown or explanations."
+      });
+
+      const cleanText = result.text.match(/```(?:json)?\s*([\s\S]*?)```/) ? result.text.match(/```(?:json)?\s*([\s\S]*?)```/)![1] : result.text;
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        setCurrentExercise(JSON.parse(jsonMatch[0]));
+      } else if (cleanText.trim().startsWith('"')) {
+        setCurrentExercise(JSON.parse('{' + cleanText + (cleanText.trim().endsWith('}') ? '' : '}')));
+      } else {
+        throw new Error('No JSON matched');
+      }
+    } catch (e) {
+      console.warn("Failed grammar gen:", e);
+      setCurrentExercise({ prompt: `Write a sentence in ${userProgress.targetLanguage || 'English'}.`, example: 'I am learning.', difficulty: 'Beginner' });
+    } finally {
+      setIsLoadingExercise(false);
+    }
+  }, [modelService.isLLMLoaded, userProgress.targetLanguage]);
+
+  React.useEffect(() => {
+    if (modelService.isLLMLoaded) {
+      loadDynamicExercise();
+    }
+  }, [modelService.isLLMLoaded, loadDynamicExercise]);
 
   const analyzeGrammar = useCallback(async () => {
     if (!userResponse.trim()) {
@@ -90,7 +140,7 @@ export const GrammarPracticeScreen: React.FC<GrammarPracticeScreenProps> = ({
       }
 
       // Generate feedback using LLM
-      const prompt = `You are an English grammar teacher. Evaluate the following student response and provide constructive feedback.
+      const prompt = `You are a grammar teacher teaching ${userProgress.targetLanguage || 'English'}. Evaluate the following student response and provide constructive feedback.
 
 Exercise: ${currentExercise.prompt}
 
@@ -109,7 +159,7 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
       const result = await RunAnywhere.generate(prompt, {
         maxTokens: 400,
         temperature: 0.3,
-        systemPrompt: 'You are a helpful English grammar teacher. Always respond with valid JSON.',
+        systemPrompt: 'You are a helpful grammar teacher. Always respond with valid JSON.',
       });
 
       // Parse the response
@@ -131,18 +181,17 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
           throw new Error('Could not parse JSON');
         }
       } catch (parseError) {
-        // Fallback feedback
-        const fallbackFeedback = {
+        console.warn('JSON Parse error', parseError);
+        setFeedback({
           score: 75,
-          corrections: ['Review subject-verb agreement', 'Check tense consistency'],
-          suggestions: ['Add more details', 'Use more complex sentence structures'],
+          corrections: ['Review conjugation'],
+          suggestions: ['Add more details'],
           overall: 'Your response is grammatically sound. Keep practicing!',
-        };
-        setFeedback(fallbackFeedback);
+        });
         await userProgress.updateXP(75);
       }
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.warn('Analysis warning:', error);
       setFeedback({
         score: 0,
         corrections: [`Error: ${error}`],
@@ -159,14 +208,10 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
     setShowFeedback(false);
     setUserResponse('');
     setCompletedCount(completedCount + 1);
+    setExerciseCount(exerciseCount + 1);
 
-    // Move to next exercise
-    if (currentExerciseIndex < GRAMMAR_EXERCISES.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-    } else {
-      // End session
-      navigation.goBack();
-    }
+    // Move to next exercise dynamically
+    loadDynamicExercise();
   };
 
   if (!modelService.isLLMLoaded) {
@@ -190,14 +235,14 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
         {/* Progress */}
         <View style={styles.progressSection}>
           <Text style={styles.progressText}>
-            Exercise {currentExerciseIndex + 1} of {GRAMMAR_EXERCISES.length}
+            Continuous Grammar Session - Exercise {exerciseCount}
           </Text>
           <View style={styles.progressBar}>
             <View
               style={[
                 styles.progressFill,
                 {
-                  width: `${((currentExerciseIndex + 1) / GRAMMAR_EXERCISES.length) * 100}%`,
+                  width: `${Math.min((completedCount / 5) * 100, 100)}%`,
                 },
               ]}
             />
@@ -206,14 +251,20 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
 
         {/* Exercise Card */}
         <View style={styles.exerciseCard}>
-          <View style={styles.difficultyBadge}>
-            <Text style={styles.difficultyText}>{currentExercise.difficulty}</Text>
-          </View>
-          <Text style={styles.prompt}>{currentExercise.prompt}</Text>
-          <View style={styles.exampleSection}>
-            <Text style={styles.exampleLabel}>Example:</Text>
-            <Text style={styles.exampleText}>"{currentExercise.example}"</Text>
-          </View>
+          {isLoadingExercise ? (
+            <ActivityIndicator color={AppColors.accentGreen} />
+          ) : (
+            <>
+              <View style={styles.difficultyBadge}>
+                <Text style={styles.difficultyText}>{currentExercise.difficulty}</Text>
+              </View>
+              <Text style={styles.prompt}>{currentExercise.prompt}</Text>
+              <View style={styles.exampleSection}>
+                <Text style={styles.exampleLabel}>AI Example:</Text>
+                <Text style={styles.exampleText}>"{currentExercise.example}"</Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Input Section */}
@@ -284,7 +335,7 @@ Format your response as JSON with keys: score, corrections, suggestions, overall
             >
               <Text style={styles.buttonIcon}>→</Text>
               <Text style={styles.buttonText}>
-                {currentExerciseIndex < GRAMMAR_EXERCISES.length - 1 ? 'Next Exercise' : 'Finish'}
+                Next Exercise
               </Text>
             </LinearGradient>
           </TouchableOpacity>

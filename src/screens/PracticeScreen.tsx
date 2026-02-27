@@ -25,7 +25,7 @@ type PracticeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Practice'>;
 };
 
-const lessons = lessonsData as Lesson[];
+const lessons = lessonsData as unknown as Lesson[];
 
 const FALLBACK_DAILY_EXERCISE: AIExercise = {
   question: 'Translate to Spanish: Good night',
@@ -41,7 +41,8 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
   const [dailyExercise, setDailyExercise] = useState<AIExercise | null>(null);
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [loadingExercise, setLoadingExercise] = useState(false);
-  const [targetLanguage, setTargetLanguage] = useState('Spanish');
+  const [loadingLessonId, setLoadingLessonId] = useState<string | null>(null);
+  const [targetLanguage] = useState('Spanish');
 
   // Lesson Mode State
   const [activeLessonExercises, setActiveLessonExercises] = useState<AIExercise[]>([]);
@@ -67,33 +68,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
     };
   }, [userProgress.targetLanguage, targetLanguage]);
 
-  const mapToAIExercise = (ex: any): AIExercise => {
-    let type: DailyExerciseType = 'written';
-    let question = ex.prompt || 'Question';
-    let answer = ex.correctAnswer || '';
 
-    if (ex.type === 'translation') type = 'typing';
-    if (ex.type === 'speaking') type = 'tts';
-    if (ex.type === 'listening') type = 'stt';
-    if (ex.type === 'fill-blank') {
-      type = 'written';
-      question = ex.sentence || ex.prompt;
-    }
-    if (ex.type === 'multiple-choice') type = 'written'; // Fallback to written for now
-
-    return {
-      question,
-      answer,
-      type,
-      hint: ex.hints ? ex.hints[0] : undefined,
-      difficulty: ex.difficulty || 1,
-      category: 'lesson',
-      options: ex.options,
-      wordBank: ex.wordBank,
-      blankPosition: ex.blankPosition,
-      context: ex.context,
-    };
-  };
 
   const handleExerciseSkip = () => {
     // Logic similar to submit but no XP
@@ -185,21 +160,35 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
     }
   };
 
-  const handleLessonPress = (lesson: Lesson) => {
+  const handleLessonPress = async (lesson: Lesson) => {
     console.log('Starting lesson:', lesson.title);
 
-    if (!lesson.exercises || lesson.exercises.length === 0) {
+    if (!lesson.exercises || Object.keys(lesson.exercises).length === 0) {
       Alert.alert("Available Soon", "This lesson content is coming soon!");
       return;
     }
 
-    const aiExercises = lesson.exercises.map(mapToAIExercise);
-    setActiveLessonExercises(aiExercises);
+    const currentLang = userProgress.targetLanguage || targetLanguage;
+    const lessonExercises = lesson.exercises[currentLang] || lesson.exercises['Spanish'] || [];
+
+    if (lessonExercises.length === 0) {
+      Alert.alert("Not Available", "This lesson is not available in your target language.");
+      return;
+    }
+
+    // Map properties correctly inside the modal wrapper
+    const mappedExercises = lessonExercises.map((ex) => ({
+      ...ex,
+      category: 'lesson',
+      difficulty: lesson.difficulty,
+    }));
+
+    setActiveLessonExercises(mappedExercises);
     setCurrentExerciseIndex(0);
     setCurrentLessonId(lesson.id);
 
     // Start first exercise
-    setDailyExercise(aiExercises[0]);
+    setDailyExercise(mappedExercises[0]);
     setExerciseModalOpen(true);
   };
 
@@ -339,7 +328,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
                         isLocked && styles.lessonTitleLocked,
                       ]}
                     >
-                      {lesson.title}
+                      {lesson.title} {loadingLessonId === lesson.id && " (Generating...)"}
                     </Text>
                     <Text style={styles.lessonDescription}>
                       {lesson.description}

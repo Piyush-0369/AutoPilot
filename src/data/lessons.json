@@ -2,12 +2,12 @@
     {
         "id": "lesson-001",
         "title": "Basic Greetings",
-        "description": "Learn how to greet people in French",
+        "description": "Learn how to greet people",
         "difficulty": 1,
         "skillNode": "greetings",
         "estimatedMinutes": 5,
         "learningObjectives": [
-            "Say hello and goodbye",
+            "Type hello and goodbye",
             "Ask how someone is",
             "Respond to greetings"
         ],
@@ -17,524 +17,396 @@
             "conversation",
             "basics"
         ],
-        "exercises": [
-            {
-                "id": "ex-001",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate to French: Hello",
-                "correctAnswer": "Bonjour",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr",
-                "hints": [
-                    "Used during the day"
-                ]
-            },
-            {
-                "id": "ex-002",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "How do you say 'Good evening' in French?",
-                "correctAnswer": "Bonsoir",
-                "options": [
-                    "Bonjour",
-                    "Bonsoir",
-                    "Bonne nuit",
-                    "Salut"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-003",
-                "type": "fill-blank",
-                "difficulty": 1,
-                "prompt": "Fill in the blank",
-                "sentence": "Comment _____ - vous ?",
-                "correctAnswer": "allez",
-                "blankPosition": 1,
-                "wordBank": [
-                    "allez",
-                    "avez",
-                    "êtes",
-                    "vas"
-                ],
-                "context": "Asking 'How are you?' formally"
-            },
-            {
-                "id": "ex-004",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate to French: Goodbye",
-                "correctAnswer": "Au revoir",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-005",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate to French: Thank you",
-                "correctAnswer": "Merci",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-001a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: See you soon",
-                "correctAnswer": "À bientôt",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-002a",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "Which greeting is informal?",
-                "correctAnswer": "Salut",
-                "options": [
-                    "Bonjour",
-                    "Au revoir",
-                    "Bonsoir",
-                    "Salut"
-                ],
-                "correctIndex": 3
-            },
-            {
-                "id": "ex-003a",
-                "type": "fill-blank",
-                "difficulty": 1,
-                "prompt": "Fill in the blank",
-                "sentence": "Ça _____ bien.",
-                "correctAnswer": "va",
-                "blankPosition": 1,
-                "wordBank": [
-                    "vas",
-                    "va",
-                    "van",
-                    "vais"
-                ],
-                "context": "Answering 'It goes well'"
-            },
-            {
-                "id": "ex-004a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Good night",
-                "correctAnswer": "Bonne nuit",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-005a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Sir",
-                "correctAnswer": "Monsieur",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            }
-        ],
-        "createdAt": "2026-01-01T00:00:00Z"
+        "exercises": {
+            "Spanish": [
+                {
+                    "type": "typing",
+                    "question": "Translate to Spanish: Hello",
+                    "answer": "Hola",
+                    "hint": "Used anytime",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in Spanish: Good morning",
+                    "answer": "Buenos días",
+                    "hint": "Morning greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Adiós",
+                    "answer": "Adiós",
+                    "hint": "Goodbye",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in Spanish",
+                    "answer": "Hola amigo",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "French": [
+                {
+                    "type": "typing",
+                    "question": "Translate to French: Hello",
+                    "answer": "Bonjour",
+                    "hint": "Used during the day",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in French: Good evening",
+                    "answer": "Bonsoir",
+                    "hint": "Night greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type",
+                    "answer": "Au revoir",
+                    "hint": "Goodbye",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in French",
+                    "answer": "Salut",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "German": [
+                {
+                    "type": "typing",
+                    "question": "Translate to German: Hello",
+                    "answer": "Hallo",
+                    "hint": "Used anytime",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in German: Good morning",
+                    "answer": "Guten Morgen",
+                    "hint": "Morning greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type:",
+                    "answer": "Tschüss",
+                    "hint": "Goodbye (informal)",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in German",
+                    "answer": "Hallo mein Freund",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "Italian": [
+                {
+                    "type": "typing",
+                    "question": "Translate to Italian: Hello",
+                    "answer": "Ciao",
+                    "hint": "Used anytime, informal",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in Italian: Good morning",
+                    "answer": "Buongiorno",
+                    "hint": "Formal morning greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type",
+                    "answer": "Arrivederci",
+                    "hint": "Goodbye (formal)",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in Italian",
+                    "answer": "Ciao amico",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "Japanese": [
+                {
+                    "type": "typing",
+                    "question": "Translate to Japanese: Hello",
+                    "answer": "Konnichiwa",
+                    "hint": "Used during the day",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in Japanese: Good morning",
+                    "answer": "Ohayou",
+                    "hint": "Morning greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type",
+                    "answer": "Typeonara",
+                    "hint": "Goodbye",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in Japanese",
+                    "answer": "Konnichiwa tomodachi",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "Korean": [
+                {
+                    "type": "typing",
+                    "question": "Translate to Korean: Hello",
+                    "answer": "Annyeonghaseyo",
+                    "hint": "Formal greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in Korean: Thank you",
+                    "answer": "Gamsahamnida",
+                    "hint": "Formal thanks",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type",
+                    "answer": "Annyeonghi gaseyo",
+                    "hint": "Goodbye (to someone leaving)",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in Korean",
+                    "answer": "Annyeong chingu",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ],
+            "Portuguese": [
+                {
+                    "type": "typing",
+                    "question": "Translate to Portuguese: Hello",
+                    "answer": "Olá",
+                    "hint": "Used anytime",
+                    "category": "greetings"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type in Portuguese: Good morning",
+                    "answer": "Bom dia",
+                    "hint": "Morning greeting",
+                    "category": "greetings"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type",
+                    "answer": "Tchau",
+                    "hint": "Goodbye (informal)",
+                    "category": "greetings"
+                },
+                {
+                    "type": "written",
+                    "question": "Write a greeting to a friend in Portuguese",
+                    "answer": "Olá amigo",
+                    "hint": "Informal greeting",
+                    "category": "greetings"
+                }
+            ]
+        }
     },
     {
-        "id": "lesson-002",
+        "id": "lesson-003",
         "title": "Numbers 1-10",
-        "description": "Learn to count from 1 to 10 in French",
+        "description": "Learn to count",
         "difficulty": 1,
-        "skillNode": "basics",
-        "estimatedMinutes": 8,
+        "skillNode": "numbers",
+        "estimatedMinutes": 3,
         "learningObjectives": [
-            "Count from 1 to 10",
-            "Recognize written numbers",
-            "Use numbers in context"
+            "Count 1 to 10"
         ],
         "prerequisites": [],
         "tags": [
             "beginner",
-            "numbers",
-            "basics"
+            "numbers"
         ],
-        "exercises": [
-            {
-                "id": "ex-006",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: One",
-                "correctAnswer": "Un",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-007",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Two",
-                "correctAnswer": "Deux",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-008",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Three",
-                "correctAnswer": "Trois",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-009",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "What is 'five' in French?",
-                "correctAnswer": "Cinq",
-                "options": [
-                    "Quatre",
-                    "Cinq",
-                    "Six",
-                    "Sept"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-010",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Ten",
-                "correctAnswer": "Dix",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-006a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Four",
-                "correctAnswer": "Quatre",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-007a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Six",
-                "correctAnswer": "Six",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-008a",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "What is 'seven' in French?",
-                "correctAnswer": "Sept",
-                "options": [
-                    "Six",
-                    "Sept",
-                    "Huit",
-                    "Neuf"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-009a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Eight",
-                "correctAnswer": "Huit",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-010a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Nine",
-                "correctAnswer": "Neuf",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            }
-        ],
-        "createdAt": "2026-01-01T00:00:00Z"
-    },
-    {
-        "id": "lesson-003",
-        "title": "Common Phrases",
-        "description": "Essential phrases for daily interaction",
-        "difficulty": 1,
-        "skillNode": "basics",
-        "estimatedMinutes": 6,
-        "learningObjectives": [
-            "Say yes and no",
-            "Apologize and excuse yourself",
-            "Ask if someone speaks English"
-        ],
-        "prerequisites": [
-            "lesson-001"
-        ],
-        "tags": [
-            "beginner",
-            "phrases",
-            "essentials"
-        ],
-        "exercises": [
-            {
-                "id": "ex-011",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate to French: Yes",
-                "correctAnswer": "Oui",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-012",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate to French: No",
-                "correctAnswer": "Non",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-013",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "How do you say 'Sorry'?",
-                "correctAnswer": "Désolé",
-                "options": [
-                    "Merci",
-                    "Désolé",
-                    "S'il vous plaît",
-                    "Bonjour"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-014",
-                "type": "fill-blank",
-                "difficulty": 1,
-                "prompt": "Fill in the blank",
-                "sentence": "Parlez-vous _____ ?",
-                "correctAnswer": "anglais",
-                "blankPosition": 1,
-                "wordBank": [
-                    "anglais",
-                    "français",
-                    "espagnol",
-                    "allemand"
-                ],
-                "context": "Asking 'Do you speak English?'"
-            },
-            {
-                "id": "ex-015",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Please",
-                "correctAnswer": "S'il vous plaît",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-011a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Excuse me",
-                "correctAnswer": "Excusez-moi",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-012a",
-                "type": "multiple-choice",
-                "difficulty": 1,
-                "prompt": "How do you say 'I don't understand'?",
-                "correctAnswer": "Je ne comprends pas",
-                "options": [
-                    "Je ne sais pas",
-                    "Je ne comprends pas",
-                    "Je suis désolé",
-                    "D'accord"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-013a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: OK / Agreed",
-                "correctAnswer": "D'accord",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-014a",
-                "type": "fill-blank",
-                "difficulty": 1,
-                "prompt": "Fill in the blank",
-                "sentence": "Je suis _____ .",
-                "correctAnswer": "désolé",
-                "blankPosition": 1,
-                "wordBank": [
-                    "désolé",
-                    "merci",
-                    "anglais",
-                    "non"
-                ],
-                "context": "Saying 'I am sorry'"
-            },
-            {
-                "id": "ex-015a",
-                "type": "translation",
-                "difficulty": 1,
-                "prompt": "Translate: Of course",
-                "correctAnswer": "Bien sûr",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            }
-        ],
-        "createdAt": "2026-01-01T00:00:00Z"
-    },
-    {
-        "id": "lesson-004",
-        "title": "At the Restaurant",
-        "description": "Order food and drinks in French",
-        "difficulty": 2,
-        "skillNode": "food",
-        "estimatedMinutes": 10,
-        "learningObjectives": [
-            "Ask for the menu",
-            "Order a drink",
-            "Ask for the bill"
-        ],
-        "prerequisites": [
-            "lesson-001",
-            "lesson-002"
-        ],
-        "tags": [
-            "beginner",
-            "food",
-            "travel"
-        ],
-        "exercises": [
-            {
-                "id": "ex-016",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: The menu, please",
-                "correctAnswer": "La carte, s'il vous plaît",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-017",
-                "type": "multiple-choice",
-                "difficulty": 2,
-                "prompt": "How do you say 'I would like'?",
-                "correctAnswer": "Je voudrais",
-                "options": [
-                    "J'aime",
-                    "Je suis",
-                    "Je voudrais",
-                    "Je vais"
-                ],
-                "correctIndex": 2
-            },
-            {
-                "id": "ex-018",
-                "type": "fill-blank",
-                "difficulty": 2,
-                "prompt": "Fill in the blank",
-                "sentence": "L'_____ , s'il vous plaît.",
-                "correctAnswer": "addition",
-                "blankPosition": 1,
-                "wordBank": [
-                    "addition",
-                    "eau",
-                    "menu",
-                    "table"
-                ],
-                "context": "Asking for the bill or check"
-            },
-            {
-                "id": "ex-019",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: A coffee",
-                "correctAnswer": "Un café",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-020",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: Delicious",
-                "correctAnswer": "Délicieux",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-016a",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: Water",
-                "correctAnswer": "L'eau",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-017a",
-                "type": "multiple-choice",
-                "difficulty": 2,
-                "prompt": "What does 'L'addition' mean?",
-                "correctAnswer": "The bill",
-                "options": [
-                    "The menu",
-                    "The bill",
-                    "The table",
-                    "The waiter"
-                ],
-                "correctIndex": 1
-            },
-            {
-                "id": "ex-018a",
-                "type": "fill-blank",
-                "difficulty": 2,
-                "prompt": "Fill in the blank",
-                "sentence": "Je suis _____ .",
-                "correctAnswer": "végétarien",
-                "blankPosition": 1,
-                "wordBank": [
-                    "végétarien",
-                    "faim",
-                    "soif",
-                    "menu"
-                ],
-                "context": "Saying 'I am vegetarian'"
-            },
-            {
-                "id": "ex-019a",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: I am hungry",
-                "correctAnswer": "J'ai faim",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            },
-            {
-                "id": "ex-020a",
-                "type": "translation",
-                "difficulty": 2,
-                "prompt": "Translate: Cheers!",
-                "correctAnswer": "Santé !",
-                "sourceLanguage": "en",
-                "targetLanguage": "fr"
-            }
-        ],
-        "createdAt": "2026-01-01T00:00:00Z"
+        "exercises": {
+            "Spanish": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Uno",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Dos",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Tres",
+                    "answer": "Tres",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "French": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Un",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Deux",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Trois",
+                    "answer": "Trois",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "German": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Eins",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Zwei",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Drei",
+                    "answer": "Drei",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "Italian": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Uno",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Due",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Tre",
+                    "answer": "Tre",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "Japanese": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Ichi",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Ni",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: San",
+                    "answer": "San",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "Korean": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Hana",
+                    "hint": "First number (native)",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Dul",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Set",
+                    "answer": "Set",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ],
+            "Portuguese": [
+                {
+                    "type": "typing",
+                    "question": "Translate: One",
+                    "answer": "Um",
+                    "hint": "First number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "typing",
+                    "question": "Type: Two",
+                    "answer": "Dois",
+                    "hint": "Second number",
+                    "category": "numbers"
+                },
+                {
+                    "type": "stt",
+                    "question": "Listen and type: Três",
+                    "answer": "Três",
+                    "hint": "Three",
+                    "category": "numbers"
+                }
+            ]
+        }
     }
 ]

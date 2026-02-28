@@ -50,7 +50,7 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
     exerciseType,
     exercise,
     onSubmit,
-    targetLanguage = 'Spanish',
+    targetLanguage = '',
     currentExerciseIndex,
     totalExercises,
     isContinuousMode = false,

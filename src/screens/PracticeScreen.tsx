@@ -48,7 +48,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
 
   const getTargetLangName = useCallback(() => {
     const found = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage);
-    return found?.label || userProgress.targetLanguage || 'Spanish';
+    return found?.label || userProgress.targetLanguage;
   }, [userProgress.targetLanguage]);
 
   // Initialize background queue safely once models are loaded
@@ -87,6 +87,10 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
     try {
       const lang = getTargetLangName();
       const nativeLangName = getNativeLangName();
+
+      // Update the prioritized type
+      aiPracticeService.prioritizeType(type);
+
       // Fetch instantly from queue
       const exercise = await aiPracticeService.popExerciseFromQueue(type, lang, nativeLangName);
 

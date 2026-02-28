@@ -158,12 +158,17 @@ class AIPracticeService {
   private BATCH_SIZE_MIN = 1;
   private BATCH_SIZE_MAX = 2;
   private INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+  private prioritizedType: DailyExerciseType | null = null;
+
+  prioritizeType(type: DailyExerciseType) {
+    this.prioritizedType = type;
+  }
 
 
 
   async generateExercise(
     type: DailyExerciseType,
-    targetLanguage: string = 'Spanish',
+    targetLanguage: string = '',
     difficulty?: number,
     nativeLanguage: string = 'English'
   ): Promise<AIExercise> {
@@ -252,7 +257,7 @@ class AIPracticeService {
    */
   async initializeBackgroundQueue(
     type: DailyExerciseType = 'typing',
-    targetLanguage: string = 'Spanish',
+    targetLanguage: string = '',
     nativeLanguage: string = 'English'
   ): Promise<void> {
     try {
@@ -328,9 +333,17 @@ class AIPracticeService {
         // Stop if no candidates left (e.g., if somehow filled quickly)
         if (candidates.length === 0) break;
 
-        // Pick a random candidate queue
-        const typeIndex = Math.floor(Math.random() * candidates.length);
-        const selectedType = candidates[typeIndex];
+        // Pick a candidate queue - favor the prioritizedType if it needs filling
+        let selectedType: DailyExerciseType;
+        let typeIndex = -1;
+
+        if (this.prioritizedType && candidates.includes(this.prioritizedType)) {
+          selectedType = this.prioritizedType;
+          typeIndex = candidates.indexOf(selectedType);
+        } else {
+          typeIndex = Math.floor(Math.random() * candidates.length);
+          selectedType = candidates[typeIndex];
+        }
 
         const key = this.getQueueKey(selectedType, targetLanguage);
         const data = await AsyncStorage.getItem(key);
@@ -363,7 +376,7 @@ class AIPracticeService {
    */
   async popExerciseFromQueue(
     type: DailyExerciseType = 'typing',
-    targetLanguage: string = 'Spanish',
+    targetLanguage: string = '',
     nativeLanguage: string = 'English'
   ): Promise<AIExercise> {
     try {
@@ -390,9 +403,10 @@ class AIPracticeService {
    */
   async backgroundGenerateReplacement(
     type: DailyExerciseType = 'typing',
-    targetLanguage: string = 'Spanish',
+    targetLanguage: string = '',
     nativeLanguage: string = 'English'
   ): Promise<void> {
+    this.prioritizeType(type);
     // We let startGlobalBackgroundGeneration handle the bulk of loading to respect constraints.
     // However, if we pop one and we're significantly under threshold or empty, we could fetch one.
     // For now we'll just let the continuous global loop handle refilling to prevent overload.
@@ -403,7 +417,7 @@ class AIPracticeService {
   // ---------------------------------
 
   async generatePracticeSet(
-    targetLanguage: string = 'Spanish',
+    targetLanguage: string = '',
     count: number = 4,
     includeTypes?: DailyExerciseType[]
   ): Promise<AIExercise[]> {
@@ -421,7 +435,7 @@ class AIPracticeService {
   }
 
   async generateDailyChallenge(
-    targetLanguage: string = 'Spanish'
+    targetLanguage: string = ''
   ): Promise<AIExercise[]> {
     const types: DailyExerciseType[] = ['typing', 'tts', 'stt'];
     const exercises: AIExercise[] = [];
@@ -450,7 +464,7 @@ class AIPracticeService {
   }
 
   async generateConversationTopic(
-    targetLanguage: string = 'Spanish'
+    targetLanguage: string = ''
   ): Promise<{ topic: string; prompt: string; vocabulary: string[] }> {
     const prompt = `Generate a conversation practice topic for ${targetLanguage} language learners.
     Provide a JSON object with keys: topic, prompt, vocabulary.
@@ -488,7 +502,7 @@ class AIPracticeService {
 
   async generateGrammarExplanation(
     grammarPoint: string,
-    targetLanguage: string = 'Spanish'
+    targetLanguage: string = ''
   ): Promise<{ explanation: string; examples: string[]; tips: string[] }> {
     const prompt = `Explain the grammar concept "${grammarPoint}" in ${targetLanguage} for beginners.
     Provide a JSON object with keys: explanation, examples, tips.
@@ -590,8 +604,8 @@ class AIPracticeService {
     const fallbacks: Record<DailyExerciseType, AIExercise> = {
       typing: {
         question: `What is Hello in ${lang}?`,
-        answer: lang === 'Spanish' ? 'Hola' : 'Hello',
-        wrongAnswer: lang === 'Spanish' ? 'Adiós' : 'Goodbye',
+        answer: 'Hello',
+        wrongAnswer: 'Goodbye',
         type: 'typing',
         hint: "It's a common greeting",
         difficulty: 1,
@@ -599,7 +613,7 @@ class AIPracticeService {
       },
       tts: {
         question: `Say in ${lang}: Good morning`,
-        answer: lang === 'Spanish' ? 'Buenos días' : 'Good morning',
+        answer: 'Good morning',
         type: 'tts',
         hint: 'A morning greeting',
         difficulty: 1,
@@ -607,8 +621,8 @@ class AIPracticeService {
       },
       stt: {
         question: `Listen and arrange the words you hear`,
-        answer: lang === 'Spanish' ? 'Gracias' : 'Thank you',
-        wrongAnswer: lang === 'Spanish' ? 'Hola' : 'Goodbye',
+        answer: 'Thank you',
+        wrongAnswer: 'Goodbye',
         type: 'stt',
         hint: 'A polite expression',
         difficulty: 1,

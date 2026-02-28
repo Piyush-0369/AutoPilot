@@ -27,7 +27,7 @@ type ChatScreenProps = {
 export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
   const modelService = useModelService();
   const { targetLanguage } = useUserProgress();
-  const targetLangName = LANGUAGES.find(l => l.code === targetLanguage || l.label === targetLanguage)?.label || targetLanguage || 'Spanish';
+  const targetLangName = LANGUAGES.find(l => l.code === targetLanguage || l.label === targetLanguage)?.label || targetLanguage;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -206,7 +206,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
             I'm here to help you learn! Ask me anything or try one of these:
           </Text>
           <View style={styles.suggestionsContainer}>
-            {renderSuggestionChip(`How do you say "Hello" in ${targetLangName || 'Spanish'}?`)}
+            {renderSuggestionChip(`How do you say "Hello" in ${targetLangName}?`)}
             {renderSuggestionChip('Teach me 3 useful travel phrases')}
             {renderSuggestionChip(`Correct my grammar: "Me gusta el gato"`)}
             {renderSuggestionChip('Explain the difference between Ser and Estar')}

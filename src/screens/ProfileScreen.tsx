@@ -28,7 +28,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const userProgress = useUserProgress();
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
 
-  const targetLanguageLabel = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage)?.label || userProgress.targetLanguage || 'Spanish';
+  const targetLanguageLabel = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage)?.label || userProgress.targetLanguage;
 
   const getRarityColor = (rarity: string) => {
     if (rarity === 'legendary') return '#8B5CF6';

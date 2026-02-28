@@ -17,11 +17,9 @@ import { LevelCard } from '../components/LevelCard';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { AIRecommendationCard } from '../components/AIRecommendationCard';
 import { AILearningBuddyCard } from '../components/AILearningBuddyCard';
-import { ExerciseModal, DailyExerciseType } from '../components/ExerciseModal';
+import { DailyExerciseType } from '../components/ExerciseModal';
 import { useUserProgress } from '../services/UserProgressService';
-import { calculateXP } from '../lib/engines/xpEngine';
 import { AppColors } from '../theme';
-import { aiPracticeService, AIExercise } from '../services/AIPracticeService';
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
@@ -29,91 +27,19 @@ type HomeScreenProps = {
 
 const DAILY_EXERCISES = [
   { type: 'typing' as DailyExerciseType, icon: '🔥', label: 'Typing', xp: 25 },
-  { type: 'tts' as DailyExerciseType, icon: '🗣️', label: 'Text-to-Speech', xp: 25 },
-  { type: 'stt' as DailyExerciseType, icon: '🎤', label: 'Speech-to-Text', xp: 25 },
-  { type: 'written' as DailyExerciseType, icon: '🔤', label: 'Written Practice', xp: 25 },
+  { type: 'tts' as DailyExerciseType, icon: '🗣️', label: 'Speaking', xp: 25 },
+  { type: 'stt' as DailyExerciseType, icon: '🎤', label: 'Listening', xp: 25 },
 ];
-
-const FALLBACK_EXERCISES: Record<DailyExerciseType, AIExercise> = {
-  typing: {
-    question: 'Translate to Spanish: Hello',
-    answer: 'Hola',
-    type: 'typing',
-    hint: "It starts with 'H'",
-    difficulty: 1,
-    category: 'greetings',
-  },
-  tts: {
-    question: 'Say in Spanish: Good morning',
-    answer: 'Buenos días',
-    type: 'tts',
-    hint: 'A morning greeting',
-    difficulty: 1,
-    category: 'greetings',
-  },
-  stt: {
-    question: 'Listen and type what you hear',
-    answer: 'Gracias',
-    type: 'stt',
-    hint: 'A polite expression',
-    difficulty: 1,
-    category: 'greetings',
-  },
-  written: {
-    question: 'Write in Spanish: Thank you',
-    answer: 'Gracias',
-    type: 'written',
-    hint: 'A polite expression',
-    difficulty: 1,
-    category: 'greetings',
-  },
-};
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const userProgress = useUserProgress();
-  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
-  const [currentExerciseType, setCurrentExerciseType] = useState<DailyExerciseType>('typing');
-  const [currentExercise, setCurrentExercise] = useState<AIExercise>(FALLBACK_EXERCISES.typing);
-  const [loadingExercise, setLoadingExercise] = useState(false);
-  const [targetLanguage, setTargetLanguage] = useState('Spanish');
 
   useEffect(() => {
     userProgress.updateStreakStatus();
-    if (userProgress.targetLanguage) {
-      setTargetLanguage(userProgress.targetLanguage);
-    }
-  }, [userProgress.targetLanguage]);
+  }, [userProgress]);
 
-  const generateExercise = useCallback(async (type: DailyExerciseType) => {
-    setLoadingExercise(true);
-    try {
-      const exercise = await aiPracticeService.generateExercise(type, targetLanguage);
-      setCurrentExercise(exercise);
-    } catch (error) {
-      console.error('Failed to generate exercise:', error);
-      setCurrentExercise(FALLBACK_EXERCISES[type]);
-    } finally {
-      setLoadingExercise(false);
-    }
-  }, [targetLanguage]);
-
-  const handleExercisePress = async (type: DailyExerciseType) => {
-    setCurrentExerciseType(type);
-    await generateExercise(type);
-    setExerciseModalOpen(true);
-  };
-
-  const handleExerciseSubmit = async (answer: string, isCorrect: boolean, timeSpent: number) => {
-    if (isCorrect) {
-      const xpResult = calculateXP({
-        difficulty: currentExercise.difficulty || 1,
-        isCorrect: true,
-        timeSpentMs: timeSpent,
-        currentStreak: userProgress.streak,
-      });
-      await userProgress.updateXP(xpResult.totalXP);
-    }
-    setExerciseModalOpen(false);
+  const handleExercisePress = (type: DailyExerciseType) => {
+    navigation.navigate('Practice', { startExerciseType: type });
   };
 
   const handleContinueLearning = () => {
@@ -163,7 +89,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <AIRecommendationCard
           title="AI Recommendation"
-          subtitle={`Practice ${userProgress.targetLanguage || 'Spanish'} to unlock the next skill level.`}
+          subtitle={`Practice ${userProgress.targetLanguage || 'English'} to unlock the next skill level.`}
         />
 
         <View style={{ marginTop: 20 }}>
@@ -208,46 +134,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               xp={DAILY_EXERCISES[2].xp}
               onPress={() => handleExercisePress(DAILY_EXERCISES[2].type)}
             />
-            <ExerciseCard
-              icon={DAILY_EXERCISES[3].icon}
-              label={DAILY_EXERCISES[3].label}
-              xp={DAILY_EXERCISES[3].xp}
-              onPress={() => handleExercisePress(DAILY_EXERCISES[3].type)}
-            />
           </View>
         </View>
 
         <View style={styles.aiLearningBuddySection}>
           <AILearningBuddyCard
-            suggestion={`Let's practice ${(userProgress.targetLanguage || 'Spanish').toLowerCase()} together!`}
+            suggestion={`Let's practice ${(userProgress.targetLanguage || 'English').toLowerCase()} together!`}
             onPress={handleAIBuddyPress}
           />
         </View>
 
         <View style={{ height: 20 }} />
       </ScrollView>
-
-      <Modal
-        visible={loadingExercise}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={AppColors.primary} />
-            <Text style={styles.loadingText}>Generating Exercise...</Text>
-          </View>
-        </View>
-      </Modal>
-
-      <ExerciseModal
-        isOpen={exerciseModalOpen}
-        onClose={() => setExerciseModalOpen(false)}
-        exerciseType={currentExerciseType}
-        exercise={currentExercise}
-        onSubmit={handleExerciseSubmit}
-        targetLanguage={targetLanguage}
-      />
 
       <BottomNav navigation={navigation} active="Home" />
     </View>

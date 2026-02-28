@@ -225,7 +225,7 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
 
   if (!modelService.isVoiceAgentReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#F5F7FA' }}>
+      <View style={styles.loadingContainer}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -413,7 +413,7 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
             </View>
             <Text style={styles.selectedDescription}>{selectedScenario.prompt}</Text>
 
-            <TouchableOpacity onPress={startConversation} style={{ marginTop: 20 }}>
+            <TouchableOpacity onPress={startConversation} style={styles.buttonMargin}>
               <LinearGradient
                 colors={[AppColors.accentCyan, '#06B6D4']}
                 start={{ x: 0, y: 0 }}
@@ -472,13 +472,10 @@ const CONVERSATION_SCENARIOS = [
   },
 ];
 
-const MODEL_IDS = {
-  llm: 'lfm2-350m-q8_0',
-  stt: 'sherpa-onnx-whisper-tiny.en',
-  tts: 'vits-piper-en_US-lessac-medium',
-};
 
 const styles = StyleSheet.create({
+  loadingContainer: { flex: 1, backgroundColor: '#F5F7FA' },
+  buttonMargin: { marginTop: 20 },
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',

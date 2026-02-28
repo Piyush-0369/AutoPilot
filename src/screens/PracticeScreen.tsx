@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,65 +10,113 @@ import {
   Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { BottomNav } from '../components/BottomNav';
 import { useUserProgress } from '../services/UserProgressService';
+import { useModelService } from '../services/ModelService';
 import { AppColors } from '../theme';
 import lessonsData from '../data/lessons.json';
-import { Lesson } from '../types';
+import { Lesson, Module as ModuleType, CEFR_LABELS } from '../types';
 import { ExerciseModal, DailyExerciseType } from '../components/ExerciseModal';
 import { aiPracticeService } from '../services/AIPracticeService';
 import { AIExercise } from '../services/AIPracticeService';
 import { calculateXP } from '../lib/engines/xpEngine';
+import { LANGUAGES } from '../data/languages';
+import { getModulesGroupedByLevel } from '../data/modules';
 
 type PracticeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Practice'>;
+  route: RouteProp<RootStackParamList, 'Practice'>;
 };
 
 const lessons = lessonsData as Lesson[];
 
-const FALLBACK_DAILY_EXERCISE: AIExercise = {
-  question: 'Translate to Spanish: Good night',
-  answer: 'Buenas noches',
-  type: 'typing',
-  hint: "It's a common evening greeting.",
-  difficulty: 1,
-  category: 'greetings',
-};
-
-export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) => {
+export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, route }) => {
   const userProgress = useUserProgress();
+  const { isVoiceAgentReady } = useModelService();
+
   const [dailyExercise, setDailyExercise] = useState<AIExercise | null>(null);
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [loadingExercise, setLoadingExercise] = useState(false);
-  const [targetLanguage, setTargetLanguage] = useState('Spanish');
+
+  // Resolve native language code to full name for prompts
+  const getNativeLangName = useCallback(() => {
+    const found = LANGUAGES.find(l => l.code === userProgress.nativeLanguage);
+    return found?.label || 'English';
+  }, [userProgress.nativeLanguage]);
+
+  // Initialize background queue safely once models are loaded
+  // We initialize the local buffer for all 3 types instantly, then kick off the global queue.
+  useEffect(() => {
+    if (isVoiceAgentReady) {
+      const lang = userProgress.targetLanguage || 'English'; // fallback if no target somehow
+      const nativeLangName = getNativeLangName();
+
+      // Ensure we immediately have something to tap into initially
+      const types: DailyExerciseType[] = ['typing', 'tts', 'stt'];
+      types.forEach(type => {
+        aiPracticeService.initializeBackgroundQueue(type, lang, nativeLangName);
+      });
+
+      // Kick off the global continuous generator loop for all practice types
+      aiPracticeService.startGlobalBackgroundGeneration(lang, nativeLangName);
+    }
+  }, [isVoiceAgentReady, userProgress.targetLanguage, getNativeLangName]);
 
   // Lesson Mode State
   const [activeLessonExercises, setActiveLessonExercises] = useState<AIExercise[]>([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
 
-  const generateDailyExercise = useCallback(async () => {
+  // Continuous Practice State
+  const [isContinuousMode, setIsContinuousMode] = useState(false);
+  const [accumulatedXP, setAccumulatedXP] = useState(0);
+  const [continuousCount, setContinuousCount] = useState(0);
+
+  // Module Practice State
+  const [, setActiveModule] = useState<ModuleType | null>(null);
+
+  const startContinuousPractice = useCallback(async (type: DailyExerciseType = 'typing') => {
     setLoadingExercise(true);
     try {
-      const lang = userProgress.targetLanguage || targetLanguage;
-      const exercise = await aiPracticeService.generateExercise('typing', lang);
+      const lang = userProgress.targetLanguage || 'English';
+      const nativeLangName = getNativeLangName();
+      // Fetch instantly from queue
+      const exercise = await aiPracticeService.popExerciseFromQueue(type, lang, nativeLangName);
+
+      // Kick off background replacement
+      aiPracticeService.backgroundGenerateReplacement(type, lang, nativeLangName);
+
       setDailyExercise(exercise);
+      setIsContinuousMode(true);
+      setAccumulatedXP(0);
+      setContinuousCount(1);
     } catch (error) {
-      console.error('Failed to generate daily exercise:', error);
-      setDailyExercise({
-        ...FALLBACK_DAILY_EXERCISE,
-        question: `Translate to ${targetLanguage}: Good night`,
-        answer: targetLanguage === 'Spanish' ? 'Buenas noches' : 'Good night',
-      });
+      console.error('Failed to pull from queue:', error);
     } finally {
-      setExerciseModalOpen(true);
       setLoadingExercise(false);
-    };
-  }, [userProgress.targetLanguage, targetLanguage]);
+      setExerciseModalOpen(true);
+    }
+  }, [userProgress.targetLanguage, getNativeLangName]);
+
+  const generateDailyExercise = useCallback(async () => {
+    // We treat the main button as continuous typing practice
+    await startContinuousPractice('typing');
+  }, [startContinuousPractice]);
+
+  // Handle auto-starting an exercise from HomeScreen navigation
+  useEffect(() => {
+    if (isVoiceAgentReady && route.params?.startExerciseType && !exerciseModalOpen) {
+      const type = route.params.startExerciseType;
+      // Clear the parameter so it doesn't loop
+      navigation.setParams({ startExerciseType: undefined });
+      startContinuousPractice(type);
+    }
+  }, [isVoiceAgentReady, route.params?.startExerciseType, exerciseModalOpen, startContinuousPractice, navigation]);
 
   const mapToAIExercise = (ex: any): AIExercise => {
-    let type: DailyExerciseType = 'written';
+    let type: DailyExerciseType = 'typing';
     let question = ex.prompt || 'Question';
     let answer = ex.correctAnswer || '';
 
@@ -76,10 +124,10 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
     if (ex.type === 'speaking') type = 'tts';
     if (ex.type === 'listening') type = 'stt';
     if (ex.type === 'fill-blank') {
-      type = 'written';
+      type = 'typing';
       question = ex.sentence || ex.prompt;
     }
-    if (ex.type === 'multiple-choice') type = 'written'; // Fallback to written for now
+    if (ex.type === 'multiple-choice') type = 'typing'; // Fallback to typing for now
 
     return {
       question,
@@ -95,7 +143,31 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
     };
   };
 
-  const handleExerciseSkip = () => {
+  const handleExerciseSkip = async () => {
+    // Continuous Mode Skip
+    if (isContinuousMode) {
+      try {
+        const lang = userProgress.targetLanguage || 'English';
+        const nativeLangName = getNativeLangName();
+        const nextExerciseType = (dailyExercise?.type || 'typing') as DailyExerciseType;
+
+        // Pop next, no XP
+        const nextExercise = await aiPracticeService.popExerciseFromQueue(nextExerciseType, lang, nativeLangName);
+        aiPracticeService.backgroundGenerateReplacement(nextExerciseType, lang, nativeLangName);
+
+        if (nextExercise && nextExercise.question && nextExercise.answer) {
+          setDailyExercise(nextExercise);
+          setContinuousCount(prev => prev + 1);
+        } else {
+          setExerciseModalOpen(false);
+        }
+      } catch (e) {
+        console.error('Error on skip continuous:', e);
+        setExerciseModalOpen(false);
+      }
+      return;
+    }
+
     // Logic similar to submit but no XP
     if (currentLessonId && activeLessonExercises.length > 0) {
       const nextIndex = currentExerciseIndex + 1;
@@ -120,7 +192,9 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
   };
 
   const handleExerciseSubmit = async (answer: string, isCorrect: boolean, timeSpent: number) => {
-    // 1. Award XP for the single exercise
+    let xpToAward = 0;
+
+    // 1. Calculate XP for the single exercise
     if (isCorrect && dailyExercise) {
       const xpResult = calculateXP({
         difficulty: dailyExercise.difficulty || 1,
@@ -128,7 +202,43 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
         timeSpentMs: timeSpent,
         currentStreak: userProgress.streak,
       });
-      await userProgress.updateXP(xpResult.totalXP);
+      xpToAward = xpResult.totalXP;
+    }
+
+    // 2. Continuous Mode logic
+    if (isContinuousMode) {
+      if (isCorrect) {
+        setAccumulatedXP(prev => prev + xpToAward);
+
+        try {
+          // Load next continuous exercise instantly
+          const lang = userProgress.targetLanguage || 'English';
+          const nativeLangName = getNativeLangName();
+          const nextExerciseType = (dailyExercise?.type || 'typing') as DailyExerciseType;
+
+          // Pop instantly from queue
+          const nextExercise = await aiPracticeService.popExerciseFromQueue(nextExerciseType, lang, nativeLangName);
+          aiPracticeService.backgroundGenerateReplacement(nextExerciseType, lang, nativeLangName);
+
+          // Validate exercise before setting
+          if (nextExercise && nextExercise.question && nextExercise.answer) {
+            setDailyExercise(nextExercise);
+            setContinuousCount(prev => prev + 1);
+          } else {
+            console.warn('[PracticeScreen] Invalid next exercise, closing modal');
+            setExerciseModalOpen(false);
+          }
+        } catch (error) {
+          console.error('[PracticeScreen] Error loading next exercise:', error);
+          setExerciseModalOpen(false);
+        }
+      }
+      return;
+    }
+
+    // 3. Normal / Lesson XP award immediately
+    if (xpToAward > 0 && !isContinuousMode) {
+      await userProgress.updateXP(xpToAward);
     }
 
     // 2. Check if we are in Lesson Mode
@@ -172,8 +282,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
         // "handleTryAgain" resets, "Skip" closes.
         // If user skips, we probably should move to next or fail lesson?
         // For now, let's assume they retry until correct or skip.
-        // If skip (handleClose called directly w/o submit), we might need to handle 'skip' in modal props?
-        // But here we are in onSubmit. If they formatted current Modal correctly, onSubmit is only called on SUCCESS?
+        // If user formatted current Modal correctly, onSubmit is only called on SUCCESS?
         // Modal code: onSubmit called in handleTextSubmit if correct.
         // If skip, onSubmit is NOT called. onClose is called.
 
@@ -217,7 +326,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
   };
 
   const renderExerciseTypeButtons = () => {
-    const exerciseTypes: DailyExerciseType[] = ['typing', 'tts', 'stt', 'written'];
+    const exerciseTypes: DailyExerciseType[] = ['typing', 'tts', 'stt'];
 
     return (
       <View style={styles.exerciseTypesContainer}>
@@ -227,29 +336,115 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
             <TouchableOpacity
               key={type}
               style={styles.exerciseTypeButton}
-              onPress={async () => {
-                setLoadingExercise(true);
-                try {
-                  const lang = userProgress.targetLanguage || targetLanguage;
-                  const exercise = await aiPracticeService.generateExercise(type, lang);
-                  setDailyExercise(exercise);
-                  setExerciseModalOpen(true);
-                } catch (error) {
-                  console.error('Failed to generate exercise:', error);
-                } finally {
-                  setLoadingExercise(false);
-                }
-              }}
+              onPress={() => startContinuousPractice(type)}
             >
               <Text style={styles.exerciseTypeIcon}>
-                {type === 'typing' ? '🔥' : type === 'tts' ? '🗣️' : type === 'stt' ? '🎤' : '✍️'}
+                {type === 'typing' ? '🧩' : type === 'tts' ? '🗣️' : '🎤'}
               </Text>
               <Text style={styles.exerciseTypeLabel}>
-                {type === 'typing' ? 'Typing' : type === 'tts' ? 'Speaking' : type === 'stt' ? 'Listening' : 'Writing'}
+                {type === 'typing' ? 'Translation' : type === 'tts' ? 'Speaking' : 'Listening'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+      </View>
+    );
+  };
+
+  const startModulePractice = useCallback(async (mod: ModuleType) => {
+    setLoadingExercise(true);
+    setActiveModule(mod);
+    try {
+      const lang = userProgress.targetLanguage || 'English';
+      const nativeLangName = getNativeLangName();
+      const exercise = await aiPracticeService.generateModuleExercise(
+        'typing', lang, mod, nativeLangName
+      );
+      setDailyExercise(exercise);
+      setIsContinuousMode(true);
+      setAccumulatedXP(0);
+      setContinuousCount(1);
+    } catch (error) {
+      console.error('Failed to generate module exercise:', error);
+    } finally {
+      setLoadingExercise(false);
+      setExerciseModalOpen(true);
+    }
+  }, [userProgress.targetLanguage, getNativeLangName]);
+
+  const renderModuleSections = () => {
+    const proficiency = userProgress.proficiencyLevel || 'beginner';
+    const grouped = getModulesGroupedByLevel(proficiency);
+
+    return (
+      <View style={styles.modulesContainer}>
+        <Text style={styles.sectionTitle}>Learning Modules</Text>
+        <Text style={styles.sectionSubtitle}>CEFR-aligned curriculum tailored to your level</Text>
+
+        {grouped.map(({ level, unlocked, modules }) => {
+          const labelInfo = CEFR_LABELS[level];
+          return (
+            <View key={level} style={styles.cefrSection}>
+              <View style={styles.cefrHeader}>
+                <Text style={styles.cefrIcon}>{labelInfo.icon}</Text>
+                <Text style={[styles.cefrLabel, { color: labelInfo.color }]}>
+                  {labelInfo.label} · {level}
+                </Text>
+                {!unlocked && (
+                  <View style={styles.lockedBadge}>
+                    <Text style={styles.lockedBadgeText}>🔒 Locked</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.moduleGrid}>
+                {modules.map((mod) => (
+                  <TouchableOpacity
+                    key={mod.id}
+                    style={[
+                      styles.moduleCard,
+                      !unlocked && styles.moduleCardLocked,
+                      { borderLeftColor: labelInfo.color },
+                    ]}
+                    onPress={() => unlocked && startModulePractice(mod)}
+                    disabled={!unlocked || loadingExercise}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.moduleCardHeader}>
+                      <Text style={styles.moduleIcon}>{mod.icon}</Text>
+                      <View style={styles.moduleInfo}>
+                        <Text
+                          style={[
+                            styles.moduleTitle,
+                            !unlocked && styles.moduleTitleLocked,
+                          ]}
+                        >
+                          {mod.title}
+                        </Text>
+                        <Text style={styles.moduleDescription}>
+                          {mod.description}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.moduleMeta}>
+                      <Text style={styles.moduleMetaText}>
+                        📝 {mod.topics.length} topics
+                      </Text>
+                      <Text style={styles.moduleMetaText}>
+                        ⏱️ {mod.estimatedMinutes} min
+                      </Text>
+                    </View>
+                    {!unlocked && (
+                      <View style={styles.moduleLockedOverlay}>
+                        <Text style={styles.moduleLockedText}>Level up to unlock</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          );
+        })}
       </View>
     );
   };
@@ -288,26 +483,28 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
         </View>
       </View>
 
-      <View style={styles.dailyExerciseButtonContainer}>
-        <TouchableOpacity
-          style={[styles.dailyExerciseButton, loadingExercise && styles.dailyExerciseButtonDisabled]}
-          onPress={generateDailyExercise}
-          disabled={loadingExercise}
-        >
-          <Text style={styles.dailyExerciseButtonText}>
-            {loadingExercise ? 'Generating with AI...' : 'Start AI Practice Session'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {renderExerciseTypeButtons()}
-      {renderConversationPracticeCard()}
-
       <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.dailyExerciseButtonContainer}>
+          <TouchableOpacity
+            style={[styles.dailyExerciseButton, loadingExercise && styles.dailyExerciseButtonDisabled]}
+            onPress={generateDailyExercise}
+            disabled={loadingExercise}
+          >
+            <Text style={styles.dailyExerciseButtonText}>
+              {loadingExercise ? 'Generating with AI...' : 'Start AI Practice Session'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {renderExerciseTypeButtons()}
+        {renderConversationPracticeCard()}
+
+        {renderModuleSections()}
+
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Available Lessons</Text>
+          <Text style={styles.sectionTitle}>Classic Lessons</Text>
           <Text style={styles.sectionSubtitle}>
-            Choose a lesson to start practicing
+            Structured lessons with pre-built exercises
           </Text>
 
           {lessons.map((lesson) => {
@@ -410,13 +607,21 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
       {dailyExercise && (
         <ExerciseModal
           isOpen={exerciseModalOpen}
-          onClose={() => {
+          isContinuousMode={isContinuousMode}
+          onClose={async () => {
             setExerciseModalOpen(false);
-            // If user closes manually during lesson, should we reset?
-            // For now, simple behavior: just close. State remains, so if they click again it might restart or resume?
-            // Ideally handleLessonPress resets it.
-            // If we want to allow resuming, we keep state. If we want to cancel, we clear it.
-            // Let's clear it if they close to avoid confusion.
+
+            // If exiting continuous mode, award accumulated XP!
+            if (isContinuousMode && accumulatedXP > 0) {
+              await userProgress.updateXP(accumulatedXP);
+              Alert.alert(
+                "Great Job!",
+                `You completed ${continuousCount - 1} continuous exercises and earned +${accumulatedXP} XP!`
+              );
+              setAccumulatedXP(0);
+              setIsContinuousMode(false);
+            }
+
             if (currentLessonId) {
               setCurrentLessonId(null);
               setActiveLessonExercises([]);
@@ -426,7 +631,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation }) =>
           exerciseType={dailyExercise.type as DailyExerciseType}
           exercise={dailyExercise}
           onSubmit={handleExerciseSubmit}
-          targetLanguage={userProgress.targetLanguage || targetLanguage}
+          targetLanguage={userProgress.targetLanguage || 'English'}
           currentExerciseIndex={currentLessonId ? currentExerciseIndex + 1 : undefined}
           totalExercises={currentLessonId ? activeLessonExercises.length : undefined}
         />
@@ -701,5 +906,101 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: AppColors.primary,
     fontWeight: '600',
+  },
+
+  // ── Module Section Styles ────────────────────────────────────
+  modulesContainer: {
+    padding: 20,
+    paddingTop: 10,
+  },
+  cefrSection: {
+    marginBottom: 20,
+  },
+  cefrHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  cefrIcon: {
+    fontSize: 20,
+  },
+  cefrLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  lockedBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  lockedBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#92400E',
+  },
+  moduleGrid: {
+    gap: 10,
+  },
+  moduleCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderLeftWidth: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  moduleCardLocked: {
+    opacity: 0.5,
+  },
+  moduleCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  moduleIcon: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  moduleInfo: {
+    flex: 1,
+  },
+  moduleTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: AppColors.primaryDark,
+    marginBottom: 2,
+  },
+  moduleTitleLocked: {
+    color: AppColors.textSecondary,
+  },
+  moduleDescription: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+  },
+  moduleMeta: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  moduleMetaText: {
+    fontSize: 11,
+    color: AppColors.textSecondary,
+  },
+  moduleLockedOverlay: {
+    marginTop: 8,
+    padding: 6,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+  },
+  moduleLockedText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400E',
+    textAlign: 'center',
   },
 });

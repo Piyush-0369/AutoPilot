@@ -37,6 +37,7 @@ const initialUser: User = {
   completedLessons: [],
   skillTreeProgress: {},
   srsItems: {},
+  weeklyXpHistory: [120, 300, 150, 450, 200, 500, 50],
   createdAt: '',
   updatedAt: ''
 };

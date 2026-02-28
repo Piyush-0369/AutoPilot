@@ -22,7 +22,27 @@ interface VoiceExerciseComponentProps {
   expectedAnswer: string;
   onAnswerSubmit: (answer: string, isCorrect: boolean) => void;
   hideInstructions?: boolean;
+  targetLanguage?: string;
 }
+
+const getLanguageCode = (lang?: string): string => {
+  if (!lang) return 'en';
+  const l = lang.toLowerCase();
+  switch (l) {
+    case 'spanish': return 'es';
+    case 'french': return 'fr';
+    case 'german': return 'de';
+    case 'italian': return 'it';
+    case 'japanese': return 'ja';
+    case 'korean': return 'ko';
+    case 'chinese':
+    case 'mandarin': return 'zh';
+    case 'russian': return 'ru';
+    case 'portuguese': return 'pt';
+    case 'dutch': return 'nl';
+    default: return 'en';
+  }
+};
 
 export const VoiceExerciseComponent: React.FC<VoiceExerciseComponentProps> = ({
   exerciseType,
@@ -30,6 +50,7 @@ export const VoiceExerciseComponent: React.FC<VoiceExerciseComponentProps> = ({
   expectedAnswer,
   onAnswerSubmit,
   hideInstructions,
+  targetLanguage,
 }) => {
   const modelService = useModelService();
 
@@ -120,9 +141,10 @@ export const VoiceExerciseComponent: React.FC<VoiceExerciseComponentProps> = ({
         throw new Error('STT model not loaded');
       }
 
+      const langCode = getLanguageCode(targetLanguage);
       const transcribeResult = await RunAnywhere.transcribe(audioBase64, {
         sampleRate: 16000,
-        language: 'en',
+        language: langCode,
       });
 
       if (transcribeResult.text) {
@@ -141,8 +163,10 @@ export const VoiceExerciseComponent: React.FC<VoiceExerciseComponentProps> = ({
   const synthesizeAndPlay = async (text: string) => {
     setIsSynthesizing(true);
     try {
+      const langCode = getLanguageCode(targetLanguage);
       const result = await RunAnywhere.synthesize(text, {
-        voice: 'default',
+        voice: langCode === 'en' ? 'default' : langCode,
+        language: langCode,
         rate: 1.0,
         pitch: 1.0,
         volume: 1.0,

@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { RunAnywhere } from '@runanywhere/core';
@@ -26,7 +25,7 @@ type ChatScreenProps = {
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
   const modelService = useModelService();
-  const { name, targetLanguage } = useUserProgress();
+  const { targetLanguage } = useUserProgress();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -60,9 +59,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
     setCurrentResponse('');
 
     try {
-      const lang = targetLanguage || 'Spanish';
-      const userName = name || 'User';
-
       // Per docs: https://docs.runanywhere.ai/react-native/quick-start#6-stream-responses
       const streamResult = await RunAnywhere.generateStream(text, {
         maxTokens: 256, // Optimized for faster mobile generation speed
@@ -84,7 +80,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
       }
 
       // Get final metrics
-      const finalResult = await streamResult.result;
+      await streamResult.result;
 
       const cleanFinalText = responseRef.current
         .replace(/<think>[\s\S]*?<\/think>/g, '')
@@ -152,7 +148,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
 
   if (!modelService.isLLMLoaded) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#F5F7FA' }}>
+      <View style={styles.loadingContainer}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -176,7 +172,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       {/* Header */}
@@ -216,6 +212,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
         </View>
       ) : (
         <FlatList
+          style={styles.messageListContainer}
           ref={flatListRef}
           data={[
             ...messages,
@@ -251,7 +248,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
           {isGenerating ? (
             <TouchableOpacity onPress={handleStop} style={styles.stopButton}>
               <View style={styles.stopIcon}>
-                <Text style={{ color: '#DC2626', fontSize: 16 }}>⏹</Text>
+                <Text style={styles.stopIconText}>⏹</Text>
               </View>
             </TouchableOpacity>
           ) : (
@@ -273,6 +270,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: { flex: 1, backgroundColor: '#F5F7FA' },
+  messageListContainer: { flex: 1 },
+  stopIconText: { color: '#DC2626', fontSize: 16 },
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',

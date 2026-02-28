@@ -231,7 +231,7 @@ The app comes preconfigured with these models:
 
 | Model | Purpose | Size | Source |
 |-------|---------|------|--------|
-| SmolLM2 360M Q8_0 | Text generation | ~400MB | HuggingFace |
+| Qwen3 0.6B Q8_0 | Text generation | ~600MB | HuggingFace |
 | Sherpa ONNX Whisper Tiny EN | Speech recognition | ~80MB | RunAnywhere |
 | Piper TTS (US English) | Voice synthesis | ~100MB | RunAnywhere |
 

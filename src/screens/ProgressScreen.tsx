@@ -41,14 +41,7 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation }) =>
     return '🔒';
   };
 
-  const masteredCount = Object.values(userProgress.skillTreeProgress).filter(
-    (s) => s === 'mastered'
-  ).length;
-  const inProgressCount = Object.values(userProgress.skillTreeProgress).filter(
-    (s) => s === 'in-progress'
-  ).length;
-  const totalNodes = skillNodes.length;
-  const progressPercent = Math.round((masteredCount / totalNodes) * 100);
+
 
   const handleNodePress = async (nodeId: string, status: string, prerequisites: string[]) => {
     // If mastered, allow review (e.g., go to Practice)
@@ -96,114 +89,120 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation }) =>
           {/* Stats Cards */}
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{progressPercent}%</Text>
+              <Text style={styles.statValue}>{Math.round((Object.values(userProgress.skillTreeProgress).filter(
+                (s) => s === 'mastered'
+              ).length / skillNodes.length) * 100)}%</Text>
               <Text style={styles.statLabel}>Overall Progress</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{masteredCount}</Text>
+              <Text style={styles.statValue}>{Object.values(userProgress.skillTreeProgress).filter(
+                (s) => s === 'mastered'
+              ).length}</Text>
               <Text style={styles.statLabel}>Skills Mastered</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{userProgress.totalMinutesLearned}</Text>
-              <Text style={styles.statLabel}>Hours Learned</Text>
+              <Text style={styles.statValue}>
+                {Math.floor(userProgress.totalMinutesLearned / 60)}h {userProgress.totalMinutesLearned % 60}m
+              </Text>
+              <Text style={styles.statLabel}>Time Learned</Text>
             </View>
           </View>
 
-          {/* Skill Tree */}
-          <Text style={styles.sectionTitle}>Skill Tree</Text>
+          {/* Course Progress Ring */}
+          <View style={styles.courseProgressContainer}>
+            <View style={styles.progressRingWrapper}>
+              {/* Very primitive CSS-based ring approximation using colored borders */}
+              <View style={[styles.progressRingOuter, { borderColor: '#E5E7EB' }]} />
+              <View style={[styles.progressRingInner, {
+                borderTopColor: AppColors.primary,
+                borderRightColor: AppColors.primary,
+                borderBottomColor: AppColors.primary,
+                borderLeftColor: 'transparent',
+                transform: [{ rotate: '45deg' }]
+              }]} />
+              <View style={styles.progressRingContent}>
+                <Text style={styles.progressRingPercent}>
+                  {Math.round((Object.values(userProgress.skillTreeProgress).filter(
+                    (s) => s === 'mastered'
+                  ).length / skillNodes.length) * 100)}%
+                </Text>
+                <Text style={styles.progressRingLabel}>Mastery</Text>
+              </View>
+            </View>
+          </View>
 
-          {skillNodes.map((node) => {
-            const status = getNodeStatus(node.id);
-            const isLocked = status === 'locked';
+          {/* Skill Tree Path */}
+          <Text style={styles.sectionTitle}>Learning Path</Text>
+          <View style={styles.pathContainer}>
 
-            return (
+            {skillNodes.map((node, index) => {
+              const status = getNodeStatus(node.id);
+              const isLocked = status === 'locked';
 
-              <TouchableOpacity
-                key={node.id}
-                activeOpacity={0.8}
-                onPress={() => handleNodePress(node.id, status, node.prerequisites)}
-                style={[
-                  styles.skillNode,
-                  isLocked && styles.skillNodeLocked,
-                ]}
-              >
-                <View style={styles.skillNodeHeader}>
-                  <View
-                    style={[
-                      styles.skillIconContainer,
-                      { backgroundColor: getStatusColor(status) + '20' },
-                    ]}
-                  >
-                    <Text style={styles.skillIcon}>{node.icon}</Text>
-                    {status === 'locked' && (
-                      <View style={styles.lockOverlay}>
-                        <Text style={styles.lockIcon}>🔒</Text>
-                      </View>
-                    )}
-                    {status !== 'locked' && (
-                      <Text style={styles.statusIcon}>
-                        {getStatusIcon(status)}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.skillInfo}>
-                    <Text
-                      style={[
-                        styles.skillTitle,
-                        isLocked && styles.skillTitleLocked,
-                      ]}
-                    >
-                      {node.title}
-                    </Text>
-                    <Text style={styles.skillDescription}>
-                      {node.description}
-                    </Text>
-                  </View>
-                </View>
+              // Create snake-like path
+              const isEven = index % 2 === 0;
+              const alignmentStyle = isEven ? styles.nodeRowLeft : styles.nodeRowRight;
 
-                <View style={styles.footerRow}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: getStatusColor(status) + '20' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: getStatusColor(status) },
-                      ]}
-                    >
-                      {status === 'mastered'
-                        ? 'Mastered'
-                        : status === 'in-progress'
-                          ? 'In Progress'
-                          : 'Tap to Unlock'}
-                    </Text>
-                  </View>
+              return (
+                <View key={node.id} style={[styles.nodeWrapper, alignmentStyle]}>
 
-                  {/* Action Button */}
-                  {!isLocked && (
-                    <View style={styles.actionButton}>
-                      <Text style={styles.actionButtonText}>
-                        {status === 'mastered' ? 'Practice' : 'Start'}
-                      </Text>
-                    </View>
+                  {/* Connector line to the next node if it's not the last one */}
+                  {index < skillNodes.length - 1 && (
+                    <View style={[styles.pathConnector, isEven ? styles.connectorRight : styles.connectorLeft]} />
                   )}
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => handleNodePress(node.id, status, node.prerequisites)}
+                    style={[
+                      styles.pathNodeBox,
+                      isLocked && styles.skillNodeLocked,
+                      { borderColor: getStatusColor(status) }
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.skillIconContainerPath,
+                        { backgroundColor: getStatusColor(status) },
+                      ]}
+                    >
+                      <Text style={styles.skillIconPath}>{node.icon}</Text>
+                      {status === 'locked' && (
+                        <View style={styles.lockOverlayPath}>
+                          <Text style={styles.lockIconPath}>🔒</Text>
+                        </View>
+                      )}
+                      {status === 'mastered' && (
+                        <View style={styles.checkBadge}>
+                          <Text style={styles.checkIcon}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.pathNodeInfo}>
+                      <Text
+                        style={[
+                          styles.skillTitlePath,
+                          isLocked && styles.skillTitleLocked,
+                        ]}
+                      >
+                        {node.title}
+                      </Text>
+                      {!isLocked && status === 'in-progress' && (
+                        <View style={styles.progressPill}>
+                          <Text style={styles.progressPillText}>In Progress</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
                 </View>
+              );
 
-                {node.prerequisites.length > 0 && isLocked && (
-                  <Text style={styles.prerequisiteText}>
-                    Requires: {node.prerequisites.map(p => skillNodes.find(n => n.id === p)?.title || p).join(', ')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-
-          })}
+            })}
+          </View>
         </View>
 
-        <View style={{ height: 80 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {/* BOTTOM NAV */}
@@ -213,6 +212,7 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation }) =>
 };
 
 const styles = StyleSheet.create({
+  bottomSpacer: { height: 80 },
   container: { flex: 1, backgroundColor: '#F5F7FA' },
 
   header: {
@@ -261,13 +261,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: AppColors.textSecondary,
     textAlign: 'center',
+    fontWeight: '500',
   },
 
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     color: AppColors.primaryDark,
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 10,
   },
 
   skillNode: {
@@ -284,75 +286,163 @@ const styles = StyleSheet.create({
 
   skillNodeLocked: {
     opacity: 0.6,
+    backgroundColor: '#F9FAFB',
   },
 
-  skillNodeHeader: {
+  // Ring Styles
+  courseProgressContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  progressRingWrapper: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  progressRingOuter: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 10,
+  },
+  progressRingInner: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 10,
+  },
+  progressRingContent: {
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    width: 100, height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+  },
+  progressRingPercent: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: AppColors.primary,
+  },
+  progressRingLabel: {
+    fontSize: 12,
+    color: AppColors.textSecondary,
+    fontWeight: '600',
+  },
+
+  // Path Styles
+  pathContainer: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  nodeWrapper: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 24,
+  },
+  nodeRowLeft: {
+    alignItems: 'flex-start',
+    paddingLeft: '10%',
+  },
+  nodeRowRight: {
+    alignItems: 'flex-end',
+    paddingRight: '10%',
+  },
+  pathConnector: {
+    position: 'absolute',
+    width: 40,
+    height: 60,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#E5E7EB',
+    top: 50,
+    zIndex: -1,
+  },
+  connectorRight: {
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    borderTopWidth: 0, borderLeftWidth: 0,
+    right: '25%', width: '50%',
+  },
+  connectorLeft: {
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderTopWidth: 0, borderRightWidth: 0,
+    borderLeftWidth: 4,
+    left: '25%', width: '50%',
+  },
+
+  pathNodeBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 12,
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'center',
+    width: 220,
+    borderWidth: 3,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
 
-  skillIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  skillIconContainerPath: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     position: 'relative',
   },
 
-  skillIcon: {
-    fontSize: 28,
-  },
-
-  statusIcon: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    fontSize: 16,
-  },
-
-  lockOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  lockIcon: {
-    fontSize: 20,
-  },
-
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-
-  actionButton: {
-    backgroundColor: AppColors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-
-  actionButtonText: {
+  skillIconPath: {
+    fontSize: 30,
     color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
   },
 
-  skillInfo: {
+  checkBadge: {
+    position: 'absolute',
+    bottom: -4, right: -4,
+    backgroundColor: '#FFF',
+    width: 20, height: 20,
+    borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2,
+  },
+  checkIcon: {
+    color: '#10B981', fontSize: 12, fontWeight: 'bold'
+  },
+
+  lockOverlayPath: {
+    position: 'absolute',
+    width: '100%', height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 30,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  lockIconPath: { fontSize: 24 },
+
+  pathNodeInfo: {
     flex: 1,
   },
 
-  skillTitle: {
+  skillTitlePath: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: AppColors.primaryDark,
     marginBottom: 4,
   },
@@ -361,27 +451,12 @@ const styles = StyleSheet.create({
     color: AppColors.textSecondary,
   },
 
-  skillDescription: {
-    fontSize: 13,
-    color: AppColors.textSecondary,
+  progressPill: {
+    backgroundColor: AppColors.primary + '20',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 12, alignSelf: 'flex-start',
   },
-
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  prerequisiteText: {
-    fontSize: 11,
-    color: AppColors.textSecondary,
-    fontStyle: 'italic',
-  },
+  progressPillText: {
+    color: AppColors.primary, fontSize: 10, fontWeight: '700'
+  }
 });

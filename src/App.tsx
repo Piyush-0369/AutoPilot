@@ -7,6 +7,8 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // Note: react-native-screens is shimmed in index.js for iOS New Architecture compatibility
 import { RunAnywhere, SDKEnvironment } from '@runanywhere/core';
+import { LlamaCPP } from '@runanywhere/llamacpp';
+import { ONNX } from '@runanywhere/onnx';
 import { ModelServiceProvider, registerDefaultModels, useModelService } from './services/ModelService';
 import { UserProgressProvider } from './services/UserProgressService';
 import { SessionServiceProvider } from './services/SessionService';
@@ -27,6 +29,7 @@ import {
   ProfileScreen,
 } from './screens';
 import { WelcomeScreen } from './screens/WelcomeScreen';
+import { AssessmentScreen } from './screens/AssessmentScreen';
 import { TransitionScreen } from './screens/TransitionScreen';
 import { RootStackParamList } from './navigation/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -48,10 +51,6 @@ const App: React.FC = () => {
         await RunAnywhere.initialize({
           environment: SDKEnvironment.Development,
         });
-
-        // Register backends (per docs: https://docs.runanywhere.ai/react-native/quick-start)
-        const { LlamaCPP } = await import('@runanywhere/llamacpp');
-        const { ONNX } = await import('@runanywhere/onnx');
 
         LlamaCPP.register();
         ONNX.register();
@@ -85,12 +84,16 @@ const App: React.FC = () => {
   };
 
   const AutoModelLoader = () => {
-    const { downloadAndLoadAllModels } = useModelService();
+    const { downloadAndLoadAllModels, modelError, isVoiceAgentReady } = useModelService();
+    const [hasAttempted, setHasAttempted] = useState(false);
 
     useEffect(() => {
-      console.log('Auto-loading all AI models on boot...');
-      downloadAndLoadAllModels();
-    }, []);
+      if (!hasAttempted && !isVoiceAgentReady && !modelError) {
+        console.log('Auto-loading all AI models on boot...');
+        setHasAttempted(true);
+        downloadAndLoadAllModels();
+      }
+    }, [downloadAndLoadAllModels, hasAttempted, isVoiceAgentReady, modelError]);
 
     return null;
   };
@@ -104,7 +107,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.gestureRoot}>
       <ModelServiceProvider>
         <UserProgressProvider>
           <SessionServiceProvider>
@@ -114,6 +117,7 @@ const App: React.FC = () => {
 
               <Stack.Navigator
                 screenOptions={{
+                  headerShown: false,
                   headerStyle: {
                     backgroundColor: AppColors.primaryDark,
                     elevation: 0,
@@ -140,22 +144,22 @@ const App: React.FC = () => {
                 <Stack.Screen
                   name="Chat"
                   component={ChatScreen}
-                  options={{ title: 'Chat' }}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="ToolCalling"
                   component={ToolCallingScreen}
-                  options={{ title: 'Interactive Tools' }}
+                  options={{ title: 'Interactive Tools', headerShown: true }}
                 />
                 <Stack.Screen
                   name="Practice"
                   component={PracticeScreen}
-                  options={{ title: 'Practice' }}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="ConversationPractice"
                   component={ConversationPracticeScreen}
-                  options={{ title: 'Conversation Practice' }}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="PronunciationPractice"
@@ -185,12 +189,12 @@ const App: React.FC = () => {
                 <Stack.Screen
                   name="Progress"
                   component={ProgressScreen}
-                  options={{ title: 'Progress' }}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="Ranking"
                   component={RankingScreen}
-                  options={{ title: 'Ranking' }}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="Profile"
@@ -200,6 +204,11 @@ const App: React.FC = () => {
                 <Stack.Screen
                   name="Welcome"
                   component={WelcomeScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Assessment"
+                  component={AssessmentScreen}
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen
@@ -218,6 +227,9 @@ const App: React.FC = () => {
 
 export default App;
 const styles = StyleSheet.create({
+  gestureRoot: {
+    flex: 1,
+  },
   splash: {
     flex: 1,
     backgroundColor: '#FAFBFF',

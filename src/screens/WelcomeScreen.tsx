@@ -11,12 +11,14 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList, STORAGE_KEYS } from '../navigation/types';
 import { useUserProgress } from '../services/UserProgressService';
 import { AppColors } from '../theme';
 
 type WelcomeScreenProps = {
     navigation: StackNavigationProp<RootStackParamList, 'Welcome'>;
+    route: RouteProp<RootStackParamList, 'Welcome'>;
 };
 
 const LANGUAGES = [
@@ -30,15 +32,26 @@ const LANGUAGES = [
 
 const DAILY_GOALS = [5, 10, 15, 20, 30];
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation, route }) => {
     const userProgress = useUserProgress();
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [selectedLanguage, setSelectedLanguage] = useState('');
+    const [proficiencyLevel, setProficiencyLevel] = useState('');
     const [dailyGoal, setDailyGoal] = useState(10);
 
+    React.useEffect(() => {
+        if (route.params?.assessmentResult) {
+            // Capitalize first letter
+            const result = route.params.assessmentResult;
+            setProficiencyLevel(result.charAt(0).toUpperCase() + result.slice(1));
+            // Move to Step 4 after setting the result
+            setStep(4);
+        }
+    }, [route.params?.assessmentResult]);
+
     const handleNext = () => {
-        if (step < 3) {
+        if (step < 4) {
             setStep(step + 1);
         } else {
             handleComplete();
@@ -53,6 +66,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
                 name,
                 targetLanguage: selectedLanguage,
                 nativeLanguage: 'en',
+                proficiencyLevel: proficiencyLevel || 'Beginner',
                 dailyGoalMinutes: dailyGoal,
                 createdAt: new Date().toISOString(),
             });
@@ -70,7 +84,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
     const canProceed = () => {
         if (step === 1) return name.trim().length > 0;
         if (step === 2) return selectedLanguage !== '';
-        if (step === 3) return true;
+        if (step === 3) return proficiencyLevel !== '';
+        if (step === 4) return true;
         return false;
     };
 
@@ -92,7 +107,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
                 {/* Progress Indicator */}
                 <View style={styles.progressContainer}>
-                    {[1, 2, 3].map((i) => (
+                    {[1, 2, 3, 4].map((i) => (
                         <View
                             key={i}
                             style={[
@@ -158,6 +173,60 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
                     {step === 3 && (
                         <View style={styles.stepContainer}>
+                            <Text style={styles.stepTitle}>
+                                Access your capabilities
+                            </Text>
+                            <Text style={styles.stepSubtitle}>
+                                We can test your knowledge to start you at the right level, or you can start from the beginning.
+                            </Text>
+                            <View style={styles.assessmentOptions}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.assessmentCard,
+                                        proficiencyLevel === 'Beginner' && styles.assessmentCardSelected,
+                                    ]}
+                                    onPress={() => setProficiencyLevel('Beginner')}
+                                >
+                                    <Text style={styles.assessmentCardEmoji}>🌱</Text>
+                                    <Text style={[
+                                        styles.assessmentCardTitle,
+                                        proficiencyLevel === 'Beginner' && styles.assessmentCardTitleSelected,
+                                    ]}>
+                                        I am a beginner
+                                    </Text>
+                                    <Text style={styles.assessmentCardDesc}>
+                                        Start with the basics
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.assessmentCard,
+                                        proficiencyLevel && proficiencyLevel !== 'Beginner' && styles.assessmentCardSelected,
+                                    ]}
+                                    onPress={() => {
+                                        navigation.navigate('Assessment', { language: selectedLanguage });
+                                    }}
+                                >
+                                    <Text style={styles.assessmentCardEmoji}>🧠</Text>
+                                    <Text style={[
+                                        styles.assessmentCardTitle,
+                                        proficiencyLevel && proficiencyLevel !== 'Beginner' && styles.assessmentCardTitleSelected,
+                                    ]}>
+                                        {proficiencyLevel && proficiencyLevel !== 'Beginner'
+                                            ? `Assessed Level: ${proficiencyLevel}`
+                                            : 'Take a learning test'}
+                                    </Text>
+                                    <Text style={styles.assessmentCardDesc}>
+                                        Find your current level
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {step === 4 && (
+                        <View style={styles.stepContainer}>
                             <Text style={styles.stepTitle}>Set your daily goal</Text>
                             <Text style={styles.stepSubtitle}>
                                 How many minutes per day do you want to practice?
@@ -214,7 +283,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
                         disabled={!canProceed()}
                     >
                         <Text style={styles.nextButtonText}>
-                            {step === 3 ? 'Get Started' : 'Next'}
+                            {step === 4 ? 'Get Started' : 'Next'}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -342,6 +411,45 @@ const styles = StyleSheet.create({
 
     languageNameSelected: {
         color: AppColors.primary,
+    },
+
+    assessmentOptions: {
+        gap: 16,
+    },
+
+    assessmentCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 16,
+        padding: 24,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+
+    assessmentCardSelected: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#FFFFFF',
+    },
+
+    assessmentCardEmoji: {
+        fontSize: 40,
+        marginBottom: 12,
+    },
+
+    assessmentCardTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        marginBottom: 4,
+    },
+
+    assessmentCardTitleSelected: {
+        color: AppColors.primary,
+    },
+
+    assessmentCardDesc: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.8)',
     },
 
     goalContainer: {

@@ -8,22 +8,26 @@ import {
     TextInput,
     ActivityIndicator,
     ScrollView,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppColors } from '../theme';
 import { VoiceExerciseComponent } from './VoiceExerciseComponent';
 
-export type DailyExerciseType = 'typing' | 'tts' | 'stt' | 'written';
+export type DailyExerciseType = 'typing' | 'tts' | 'stt';
 
 interface Exercise {
     question: string;
     answer: string;
+    wrongAnswer?: string;
     type: string;
     hint?: string;
     options?: string[];
     wordBank?: string[];
     blankPosition?: number;
     context?: string;
+    difficulty?: number;
 }
 
 interface ExerciseModalProps {
@@ -36,6 +40,7 @@ interface ExerciseModalProps {
     targetLanguage?: string;
     currentExerciseIndex?: number;
     totalExercises?: number;
+    isContinuousMode?: boolean;
 }
 
 export const ExerciseModal: React.FC<ExerciseModalProps> = ({
@@ -48,42 +53,76 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
     targetLanguage = 'Spanish',
     currentExerciseIndex,
     totalExercises,
+    isContinuousMode = false,
 }) => {
     const [userAnswer, setUserAnswer] = useState('');
     const [showFeedback, setShowFeedback] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
     const [startTime] = useState(Date.now());
+    const [availableWords, setAvailableWords] = useState<string[]>([]);
+    const [arrangedWords, setArrangedWords] = useState<string[]>([]);
 
     // Effect to reset state when exercise changes
     React.useEffect(() => {
         setUserAnswer('');
         setShowFeedback(false);
         setIsCorrect(false);
-    }, [exercise]);
+        setAvailableWords([]);
+        setArrangedWords([]);
+
+        if (exerciseType === 'typing' && exercise.answer) {
+            const diff = exercise.difficulty ?? 1;
+            if (diff === 3) {
+                // Intermediate: characters
+                const chars = exercise.answer.split('');
+                const distractors = exercise.options || [];
+                const combined = [...chars, ...distractors];
+                setAvailableWords(combined.sort(() => Math.random() - 0.5));
+            } else {
+                // Beginner & Advanced: words
+                const words = exercise.answer.split(/\s+/);
+                const distractors = exercise.options || [];
+                const combined = [...words, ...distractors];
+                const filtered = combined.filter(w => w.trim().length > 0);
+                setAvailableWords(filtered.sort(() => Math.random() - 0.5));
+            }
+        } else if (exerciseType === 'stt' && exercise.answer) {
+            // Split answer and wrongAnswer into words safely
+            const safeAnswer = String(exercise.answer || '');
+            const safeWrongAnswer = exercise.wrongAnswer ? String(exercise.wrongAnswer) : '';
+            const distractors = exercise.options || [];
+
+            const words = [
+                ...safeAnswer.split(/\s+/),
+                ...(safeWrongAnswer ? safeWrongAnswer.split(/\s+/) : []),
+                ...distractors
+            ];
+
+            // Filter empty strings and shuffle
+            const filteredWords = words.filter(w => w.trim().length > 0);
+            setAvailableWords(filteredWords.sort(() => Math.random() - 0.5));
+        }
+    }, [exercise, exerciseType]);
 
     const getExerciseIcon = () => {
         switch (exerciseType) {
             case 'typing':
-                return '🔥';
+                return '🧩';
             case 'tts':
                 return '🗣️';
             case 'stt':
                 return '🎤';
-            case 'written':
-                return '🔤';
         }
     };
 
     const getExerciseTitle = () => {
         switch (exerciseType) {
             case 'typing':
-                return 'Typing Exercise';
+                return 'Translation';
             case 'tts':
                 return 'Text-to-Speech Exercise';
             case 'stt':
                 return 'Speech-to-Text Exercise';
-            case 'written':
-                return 'Written Practice';
         }
     };
 
@@ -99,7 +138,7 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
     };
 
     const handleTextSubmit = () => {
-        const correct = userAnswer.trim().toLowerCase() === exercise.answer.toLowerCase();
+        const correct = String(userAnswer).trim().toLowerCase() === String(exercise.answer || '').toLowerCase();
         const timeSpent = Date.now() - startTime;
         setIsCorrect(correct);
         setShowFeedback(true);
@@ -132,6 +171,63 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
         setShowFeedback(false);
         onClose();
     };
+
+    const handleWordSelect = (word: string, index: number) => {
+        if (showFeedback) return;
+        const newAvailable = [...availableWords];
+        newAvailable.splice(index, 1);
+        setAvailableWords(newAvailable);
+
+        const newArranged = [...arrangedWords, word];
+        setArrangedWords(newArranged);
+
+        const isIntermediate = exerciseType === 'typing' && (exercise.difficulty === 3);
+        setUserAnswer(newArranged.join(isIntermediate ? '' : ' '));
+    };
+
+    const handleWordDeselect = (word: string, index: number) => {
+        if (showFeedback) return;
+        const newArranged = [...arrangedWords];
+        newArranged.splice(index, 1);
+        setArrangedWords(newArranged);
+        setAvailableWords([...availableWords, word]);
+
+        const isIntermediate = exerciseType === 'typing' && (exercise.difficulty === 3);
+        setUserAnswer(newArranged.join(isIntermediate ? '' : ' '));
+    };
+
+    const renderWordArrangement = () => (
+        <View style={styles.wordArrangementSection}>
+            <View style={styles.arrangedWordsArea}>
+                {arrangedWords.length === 0 ? (
+                    <Text style={styles.arrangedWordsPlaceholder}>Tap words to arrange them here</Text>
+                ) : (
+                    arrangedWords.map((word, index) => (
+                        <TouchableOpacity
+                            key={`arranged-${index}`}
+                            style={styles.arrangedWordButton}
+                            onPress={() => handleWordDeselect(word, index)}
+                            disabled={showFeedback}
+                        >
+                            <Text style={styles.arrangedWordText}>{word}</Text>
+                        </TouchableOpacity>
+                    ))
+                )}
+            </View>
+            <View style={styles.availableWordsArea}>
+                {availableWords.map((word, index) => (
+                    <TouchableOpacity
+                        key={`available-${index}`}
+                        style={styles.availableWordButton}
+                        onPress={() => handleWordSelect(word, index)}
+                        disabled={showFeedback}
+                    >
+                        <Text style={styles.availableWordText}>{word}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
 
     // For Multiple Choice
     const renderMultipleChoice = () => {
@@ -266,21 +362,31 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         Correct answer:
                     </Text>
                     <Text style={styles.correctAnswerText}>
-                        {exercise.answer}
+                        {String(exercise.answer)}
                     </Text>
                 </View>
             )}
 
             {isCorrect ? (
-                <View style={styles.xpRewardBox}>
-                    <Text style={styles.xpRewardIcon}>⚡</Text>
-                    <View>
-                        <Text style={styles.xpRewardTitle}>+25 XP Earned!</Text>
-                        <Text style={styles.xpRewardSubtitle}>
-                            Exercise completed
-                        </Text>
+                isContinuousMode ? (
+                    <View style={styles.xpRewardBox}>
+                        <Text style={styles.xpRewardIcon}>✨</Text>
+                        <View>
+                            <Text style={styles.xpRewardTitle}>Correct!</Text>
+                            <Text style={styles.xpRewardSubtitle}>Loading next exercise...</Text>
+                        </View>
                     </View>
-                </View>
+                ) : (
+                    <View style={styles.xpRewardBox}>
+                        <Text style={styles.xpRewardIcon}>⚡</Text>
+                        <View>
+                            <Text style={styles.xpRewardTitle}>+25 XP Earned!</Text>
+                            <Text style={styles.xpRewardSubtitle}>
+                                Exercise completed
+                            </Text>
+                        </View>
+                    </View>
+                )
             ) : (
                 <TouchableOpacity
                     style={styles.tryAgainButton}
@@ -352,34 +458,38 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         question={exercise.question}
                         expectedAnswer={exercise.answer}
                         onAnswerSubmit={handleVoiceAnswer}
+                        targetLanguage={targetLanguage}
                     />
                 ) : (
                     <>
-                        {exercise.options ? (
+                        {exerciseType === 'typing' ? (
+                            renderWordArrangement()
+                        ) : exercise.options && Array.isArray(exercise.options) ? (
                             renderMultipleChoice()
-                        ) : exercise.wordBank ? (
+                        ) : exercise.wordBank && Array.isArray(exercise.wordBank) ? (
                             renderFillBlank()
-                        ) : (
+                        ) : exerciseType === 'stt' ? (
                             <>
-                                {exerciseType === 'stt' && (
-                                    <VoiceExerciseComponent
-                                        exerciseType="tts"
-                                        question=""
-                                        expectedAnswer={exercise.answer}
-                                        onAnswerSubmit={() => { }}
-                                        hideInstructions={true}
-                                    />
-                                )}
-                                {renderTextInput()}
+                                <VoiceExerciseComponent
+                                    exerciseType="tts"
+                                    question=""
+                                    expectedAnswer={exercise.answer}
+                                    onAnswerSubmit={() => { }}
+                                    hideInstructions={true}
+                                    targetLanguage={targetLanguage}
+                                />
+                                {renderWordArrangement()}
                             </>
+                        ) : (
+                            renderTextInput()
                         )}
 
                         <TouchableOpacity
                             onPress={handleTextSubmit}
-                            disabled={!userAnswer.trim() || showFeedback}
+                            disabled={!String(userAnswer).trim() || showFeedback}
                             style={[
                                 styles.submitButton,
-                                (!userAnswer.trim() || showFeedback) && styles.submitButtonDisabled,
+                                (!String(userAnswer).trim() || showFeedback) && styles.submitButtonDisabled,
                             ]}
                         >
                             <Text style={styles.submitButtonText}>Check Answer</Text>
@@ -438,9 +548,14 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         </View>
                     </LinearGradient>
 
-                    <ScrollView style={styles.contentScroll} contentContainerStyle={styles.content}>
-                        {renderContent()}
-                    </ScrollView>
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        style={styles.keyboardAvoid}
+                    >
+                        <ScrollView style={styles.contentScroll} contentContainerStyle={styles.content}>
+                            {renderContent()}
+                        </ScrollView>
+                    </KeyboardAvoidingView>
                 </View>
             </View>
         </Modal>
@@ -501,6 +616,9 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#FFFFFF',
         opacity: 0.9,
+    },
+    keyboardAvoid: {
+        flexShrink: 1,
     },
     contentScroll: {
         maxHeight: 400,
@@ -712,5 +830,61 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontWeight: '700',
         fontSize: 16,
+    },
+    wordArrangementSection: {
+        marginBottom: 16,
+    },
+    arrangedWordsArea: {
+        minHeight: 60,
+        backgroundColor: '#F9FAFB',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    arrangedWordsPlaceholder: {
+        color: '#9CA3AF',
+        fontSize: 15,
+        fontStyle: 'italic',
+    },
+    arrangedWordButton: {
+        backgroundColor: '#2F5FED',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+    },
+    arrangedWordText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    availableWordsArea: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        justifyContent: 'center',
+    },
+    availableWordButton: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#2F5FED',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+    },
+    availableWordText: {
+        color: '#2F5FED',
+        fontSize: 16,
+        fontWeight: '500',
     },
 });

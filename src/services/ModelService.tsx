@@ -6,8 +6,7 @@ import { ONNX, ModelArtifactType } from '@runanywhere/onnx';
 // Model IDs - matching sample app model registry
 // See: /Users/shubhammalhotra/Desktop/test-fresh/runanywhere-sdks/examples/react-native/RunAnywhereAI/App.tsx
 const MODEL_IDS = {
-  llm: 'qwen3-0.6b-gguf', // Primary multilingual model with excellent reasoning
-  stt: 'sherpa-onnx-whisper-tiny', // Multilingual STT
+  llm: 'qwen2.5-0.5b-instruct-q4_k_m_v2', // Changed ID to force redownload, bypassing corrupted cached Qwen3 model
 } as const;
 
 export const TTS_VOICES = {
@@ -31,6 +30,12 @@ export const TTS_VOICES = {
     name: 'German',
     url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-de_DE-thorsten-medium.tar.gz',
   },
+};
+
+export const MULTILINGUAL_STT_MODEL = {
+  id: 'sherpa-onnx-whisper-tiny-en-v2', // Changed ID to bypass corrupted bz2 cache
+  name: 'Sherpa Whisper Tiny (English HQ)',
+  url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/sherpa-onnx-whisper-tiny.en.tar.gz?download=true',
 };
 
 export type SupportedLanguage = keyof typeof TTS_VOICES;
@@ -142,7 +147,6 @@ export const ModelServiceProvider: React.FC<ModelServiceProviderProps> = ({ chil
   const setActiveLanguage = useCallback(async (lang: SupportedLanguage) => {
     if (activeLanguage === lang) return;
 
-    // Changing language means we need to unload current TTS voice and require loading the new one
     try {
       if (isTTSLoaded) {
         await RunAnywhere.unloadTTSModel();
@@ -194,12 +198,12 @@ export const ModelServiceProvider: React.FC<ModelServiceProviderProps> = ({ chil
     if (isSTTDownloading || isSTTLoading) return;
 
     try {
-      const isDownloaded = await checkModelDownloaded(MODEL_IDS.stt);
+      const isDownloaded = await checkModelDownloaded(MULTILINGUAL_STT_MODEL.id);
 
       if (!isDownloaded) {
         setIsSTTDownloading(true);
 
-        await RunAnywhere.downloadModel(MODEL_IDS.stt, (progress) => {
+        await RunAnywhere.downloadModel(MULTILINGUAL_STT_MODEL.id, (progress) => {
           ProgressEmitter.emit('stt', progress.progress * 100);
         });
 
@@ -208,7 +212,7 @@ export const ModelServiceProvider: React.FC<ModelServiceProviderProps> = ({ chil
 
       // Load the STT model (per docs: loadSTTModel(localPath, 'whisper'))
       setIsSTTLoading(true);
-      const modelInfo = await RunAnywhere.getModelInfo(MODEL_IDS.stt);
+      const modelInfo = await RunAnywhere.getModelInfo(MULTILINGUAL_STT_MODEL.id);
       if (modelInfo?.localPath) {
         await RunAnywhere.loadSTTModel(modelInfo.localPath, 'whisper');
         setIsSTTLoaded(true);
@@ -267,7 +271,7 @@ export const ModelServiceProvider: React.FC<ModelServiceProviderProps> = ({ chil
       console.log('Starting TTS model pipeline...');
       await downloadAndLoadTTS();
 
-      // 3. LLM (Largest, ~400MB) - Load last to prioritize basic voice IO working safely
+      // 3. LLM (Largest, ~600MB) - Load last to prioritize basic voice IO working safely
       console.log('Starting LLM model pipeline...');
       await downloadAndLoadLLM();
 
@@ -324,19 +328,20 @@ export const ModelServiceProvider: React.FC<ModelServiceProviderProps> = ({ chil
  * Models match the sample app: /Users/shubhammalhotra/Desktop/test-fresh/runanywhere-sdks/examples/react-native/RunAnywhereAI/App.tsx
  */
 export const registerDefaultModels = async () => {
-  // Qwen2.5-0.5B-Instruct-GGUF (Q4_K_M) - Faster & Multilingual & Lightweight
+  // Qwen2.5-0.5B-Instruct-GGUF (Q4_K_M) - Multilingual & Lightweight
+  // NOTE: Qwen3 architecture is NOT yet supported by the RunAnywhere SDK's llama.cpp backend
   await LlamaCPP.addModel({
     id: MODEL_IDS.llm,
     name: 'Qwen2.5 0.5B Q4_K_M',
-    url: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf',
-    memoryRequirement: 450_000_000, // Reduced from 700MB to 450MB
+    url: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true',
+    memoryRequirement: 450_000_000,
   });
 
   // SmolLM2-360M-GGUF (Secondary - Fallback)
   await LlamaCPP.addModel({
     id: 'smollm2-360m-q8_0',
     name: 'SmolLM2 360M Q8_0',
-    url: 'https://huggingface.co/prithivMLmods/SmolLM2-360M-GGUF/resolve/main/SmolLM2-360M.Q8_0.gguf',
+    url: 'https://huggingface.co/prithivMLmods/SmolLM2-360M-GGUF/resolve/main/SmolLM2-360M.Q8_0.gguf?download=true',
     memoryRequirement: 500_000_000,
   });
 
@@ -344,15 +349,15 @@ export const registerDefaultModels = async () => {
   await LlamaCPP.addModel({
     id: 'lfm2-350m-q8_0',
     name: 'LiquidAI LFM2 350M Q8_0',
-    url: 'https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/LFM2-350M-Q8_0.gguf',
+    url: 'https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/LFM2-350M-Q8_0.gguf?download=true',
     memoryRequirement: 400_000_000,
   });
 
-  // STT Model - Sherpa Whisper Tiny English (Multilingual unavailable in v1)
+  // STT Model - Whisper
   await ONNX.addModel({
-    id: MODEL_IDS.stt,
-    name: 'Sherpa Whisper Tiny (ONNX)',
-    url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/sherpa-onnx-whisper-tiny.en.tar.gz',
+    id: MULTILINGUAL_STT_MODEL.id,
+    name: MULTILINGUAL_STT_MODEL.name,
+    url: MULTILINGUAL_STT_MODEL.url,
     modality: ModelCategory.SpeechRecognition,
     artifactType: ModelArtifactType.TarGzArchive,
     memoryRequirement: 75_000_000,

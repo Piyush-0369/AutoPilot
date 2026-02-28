@@ -6,6 +6,7 @@ export interface User {
     avatar?: string
     targetLanguage: string
     nativeLanguage: string
+    proficiencyLevel?: string
     dailyGoalMinutes: number
     xp: number
     level: number
@@ -18,6 +19,7 @@ export interface User {
     completedLessons: string[]
     skillTreeProgress: Record<string, SkillNodeStatus>
     srsItems: Record<string, SRSItem>
+    weeklyXpHistory: number[]
     createdAt: string
     updatedAt: string
 }
@@ -137,6 +139,36 @@ export interface SkillNode {
     }
     category: string
 }
+
+// CEFR Level types
+export type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2';
+
+export interface Module {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    cefrLevel: CEFRLevel;
+    category: string;
+    topics: string[];
+    lessonCount: number;
+    estimatedMinutes: number;
+    learningObjectives: string[];
+}
+
+export const PROFICIENCY_TO_CEFR: Record<string, CEFRLevel> = {
+    beginner: 'A1',
+    elementary: 'A2',
+    intermediate: 'B1',
+    advanced: 'B2',
+};
+
+export const CEFR_LABELS: Record<CEFRLevel, { label: string; icon: string; color: string }> = {
+    A1: { label: 'Beginner', icon: '🌱', color: '#16A34A' },
+    A2: { label: 'Elementary', icon: '🌿', color: '#CA8A04' },
+    B1: { label: 'Intermediate', icon: '🌳', color: '#2563EB' },
+    B2: { label: 'Advanced', icon: '🚀', color: '#7C3AED' },
+};
 
 // Leaderboard types
 export interface LeaderboardEntry {

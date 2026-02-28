@@ -13,3 +13,4 @@ export * from './RankingScreen';
 export * from './ProfileScreen';
 export * from './WelcomeScreen';
 export * from './TransitionScreen';
+export * from './AssessmentScreen';

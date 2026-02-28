@@ -16,6 +16,7 @@ export interface AIExercise {
   wordBank?: string[];
   blankPosition?: number;
   context?: string;
+  isFallback?: boolean;
 }
 
 export interface PracticeSession {
@@ -29,13 +30,13 @@ const EXERCISE_PROMPTS = {
   typing: (lang: string, difficulty: number, nativeLang: string = 'English') => {
     if (difficulty <= 2) {
       return `Generate a beginner vocabulary translation exercise for ${lang}.
-Question in ${nativeLang}, answer in ${lang}.
+The translation must be in ${nativeLang}.
 Output ONLY valid JSON. Do not include markdown formatting or explanations.
 
 Example output:
 {
-  "question": "Apple",
-  "answer": "Manzana",
+  "phrase": "Apple",
+  "translation": "Manzana",
   "distractors": ["Naranja", "Perro", "Gato"],
   "hint": "A common red fruit.",
   "category": "food"
@@ -44,14 +45,14 @@ Example output:
 Task: Generate a new exercise.`;
     } else if (difficulty <= 3) {
       return `Generate an intermediate vocabulary translation exercise for ${lang}.
-Question in ${nativeLang}, answer in ${lang}.
+The translation must be in ${nativeLang}.
 Provide 3 random individual letters in ${lang} as distractors.
 Output ONLY valid JSON. Do not include markdown formatting or explanations.
 
 Example output:
 {
-  "question": "Water",
-  "answer": "Agua",
+  "phrase": "Water",
+  "translation": "Agua",
   "distractors": ["x", "z", "k"],
   "hint": "Essential liquid for drinking.",
   "category": "travel"
@@ -60,14 +61,14 @@ Example output:
 Task: Generate a new exercise.`;
     } else {
       return `Generate an advanced sentence translation exercise for ${lang}.
-Question in ${nativeLang}, answer in ${lang}.
+The translation must be in ${nativeLang}.
 Provide 3 grammatically incorrect or unrelated words in ${lang} as distractors.
 Output ONLY valid JSON. Do not include markdown formatting or explanations.
 
 Example output:
 {
-  "question": "Where is the train station?",
-  "answer": "Dónde está la estación de tren",
+  "phrase": "Where is the train station?",
+  "translation": "Dónde está la estación de tren",
   "distractors": ["aeropuerto", "cuando", "coche"],
   "hint": "Use the verb 'estar' for locations.",
   "category": "travel"
@@ -77,9 +78,10 @@ Task: Generate a new exercise.`;
     }
   },
 
-  tts: (lang: string, difficulty: number) => {
+  tts: (lang: string, difficulty: number, nativeLang: string = 'English') => {
     const length = difficulty <= 2 ? 'short' : difficulty === 3 ? 'medium-length' : 'long';
     return `Generate a ${length} speaking exercise for ${lang}.
+The translation must be in ${nativeLang}.
 Output ONLY valid JSON. Do not include markdown formatting or explanations.
 
 Example output:
@@ -93,9 +95,10 @@ Example output:
 Task: Generate a new exercise.`;
   },
 
-  stt: (lang: string, difficulty: number) => {
+  stt: (lang: string, difficulty: number, nativeLang: string = 'English') => {
     const length = difficulty <= 2 ? 'short' : difficulty === 3 ? 'medium-length' : 'long';
     return `Generate a ${length} listening comprehension exercise for ${lang}.
+The translation must be in ${nativeLang}.
 Provide 3 grammatically tricky or phonetically similar individual words as distractors.
 Output ONLY valid JSON. Do not include markdown formatting or explanations.
 
@@ -182,7 +185,7 @@ class AIPracticeService {
     try {
       const prompt = type === 'typing'
         ? EXERCISE_PROMPTS.typing(targetLanguage, diff, nativeLanguage)
-        : (EXERCISE_PROMPTS as any)[type](targetLanguage, diff);
+        : (EXERCISE_PROMPTS as any)[type](targetLanguage, diff, nativeLanguage);
 
       const result = await RunAnywhere.generate(prompt, {
         maxTokens: 150,
@@ -190,13 +193,15 @@ class AIPracticeService {
         systemPrompt: 'Respond with VALID JSON only. /no_think',
       });
 
+      console.log(`[AIPracticeService] Raw LLM output for ${type}:`, result.text);
+
       let parsed = this.parseJSONResponse(result.text);
 
       if (parsed) {
-        if ((type === 'tts' || type === 'stt') && parsed.phrase) {
-          parsed.question = type === 'tts' ? parsed.phrase : "Listen and arrange the words";
-          parsed.answer = parsed.phrase;
-          if (parsed.translation) {
+        if ((type === 'tts' || type === 'stt' || type === 'typing') && parsed.phrase) {
+          parsed.question = type === 'tts' ? parsed.phrase : parsed.phrase;
+          parsed.answer = parsed.translation || parsed.phrase;
+          if (parsed.translation && type !== 'typing') {
             parsed.hint = parsed.hint ? `${parsed.translation}\nHint: ${parsed.hint}` : parsed.translation;
           }
         }
@@ -220,7 +225,10 @@ class AIPracticeService {
           category: parsed.category || 'general',
           options,
         };
+        console.log(`[AIPracticeService] Parsed and valid exercise:`, exercise);
         return exercise;
+      } else {
+        console.log(`[AIPracticeService] Failed validation. parsed:`, parsed);
       }
     } catch (error) {
       console.error('AI Exercise generation error:', error);
@@ -259,7 +267,7 @@ class AIPracticeService {
         const needed = 2 - queue.length;
         for (let i = 0; i < needed; i++) {
           const newExercise = await this.generateExercise(type, targetLanguage, this.currentDifficulty, nativeLanguage);
-          if (!isSimilarToPrevious(newExercise.question, queue)) {
+          if (!newExercise.isFallback && !isSimilarToPrevious(newExercise.question, queue)) {
             queue.push(newExercise);
           }
         }
@@ -334,12 +342,12 @@ class AIPracticeService {
         }
 
         const newExercise = await this.generateExercise(selectedType, targetLanguage, this.currentDifficulty, nativeLanguage);
-        if (newExercise && !isSimilarToPrevious(newExercise.question, queue)) {
+        if (newExercise && !newExercise.isFallback && !isSimilarToPrevious(newExercise.question, queue)) {
           queue.push(newExercise);
           await AsyncStorage.setItem(key, JSON.stringify(queue));
           console.log(`[AIPracticeService] Added new ${selectedType} exercise. Queue size: ${queue.length}`);
         } else {
-          console.log(`[AIPracticeService] Skipping similar or invalid exercise for ${selectedType}.`);
+          console.log(`[AIPracticeService] Skipping similar, fallback, or invalid exercise for ${selectedType}.`);
         }
       }
 
@@ -517,12 +525,6 @@ class AIPracticeService {
   }
 
   private parseJSONResponse(text: string): any | null {
-    // Ensure the response contains at least one non-ASCII character
-    if (!/[^\x00-\x7F]/.test(text)) {
-      console.warn('[AIPracticeService] Rejected AI response (no non-ASCII characters found).');
-      return null;
-    }
-
     try {
       // 1. Remove <think> blocks if present
       let cleanText = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
@@ -582,7 +584,7 @@ class AIPracticeService {
           category: 'greetings',
         },
       };
-      return frenchExercises[type];
+      return { ...frenchExercises[type], isFallback: true };
     }
 
     const fallbacks: Record<DailyExerciseType, AIExercise> = {
@@ -613,7 +615,7 @@ class AIPracticeService {
         category: 'greetings',
       },
     };
-    return fallbacks[type];
+    return { ...fallbacks[type], isFallback: true };
   }
 
   /**
@@ -638,7 +640,7 @@ class AIPracticeService {
     try {
       const prompt = type === 'typing'
         ? EXERCISE_PROMPTS.typing(targetLanguage, diff, nativeLanguage)
-        : (EXERCISE_PROMPTS as any)[type](targetLanguage, diff);
+        : (EXERCISE_PROMPTS as any)[type](targetLanguage, diff, nativeLanguage);
 
       const result = await RunAnywhere.generate(prompt, {
         maxTokens: 150,

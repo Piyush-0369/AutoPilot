@@ -42,15 +42,20 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
 
   // Resolve native language code to full name for prompts
   const getNativeLangName = useCallback(() => {
-    const found = LANGUAGES.find(l => l.code === userProgress.nativeLanguage);
-    return found?.label || 'English';
+    const found = LANGUAGES.find(l => l.code === userProgress.nativeLanguage || l.label === userProgress.nativeLanguage);
+    return found?.label || userProgress.nativeLanguage || 'English';
   }, [userProgress.nativeLanguage]);
+
+  const getTargetLangName = useCallback(() => {
+    const found = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage);
+    return found?.label || userProgress.targetLanguage || 'Spanish';
+  }, [userProgress.targetLanguage]);
 
   // Initialize background queue safely once models are loaded
   // We initialize the local buffer for all 3 types instantly, then kick off the global queue.
   useEffect(() => {
     if (isVoiceAgentReady) {
-      const lang = userProgress.targetLanguage || 'English'; // fallback if no target somehow
+      const lang = getTargetLangName(); // fallback if no target somehow
       const nativeLangName = getNativeLangName();
 
       // Ensure we immediately have something to tap into initially
@@ -62,7 +67,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
       // Kick off the global continuous generator loop for all practice types
       aiPracticeService.startGlobalBackgroundGeneration(lang, nativeLangName);
     }
-  }, [isVoiceAgentReady, userProgress.targetLanguage, getNativeLangName]);
+  }, [isVoiceAgentReady, getTargetLangName, getNativeLangName]);
 
   // Lesson Mode State
   const [activeLessonExercises, setActiveLessonExercises] = useState<AIExercise[]>([]);
@@ -80,7 +85,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
   const startContinuousPractice = useCallback(async (type: DailyExerciseType = 'typing') => {
     setLoadingExercise(true);
     try {
-      const lang = userProgress.targetLanguage || 'English';
+      const lang = getTargetLangName();
       const nativeLangName = getNativeLangName();
       // Fetch instantly from queue
       const exercise = await aiPracticeService.popExerciseFromQueue(type, lang, nativeLangName);
@@ -98,7 +103,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
       setLoadingExercise(false);
       setExerciseModalOpen(true);
     }
-  }, [userProgress.targetLanguage, getNativeLangName]);
+  }, [getTargetLangName, getNativeLangName]);
 
   const generateDailyExercise = useCallback(async () => {
     // We treat the main button as continuous typing practice
@@ -147,7 +152,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
     // Continuous Mode Skip
     if (isContinuousMode) {
       try {
-        const lang = userProgress.targetLanguage || 'English';
+        const lang = getTargetLangName();
         const nativeLangName = getNativeLangName();
         const nextExerciseType = (dailyExercise?.type || 'typing') as DailyExerciseType;
 
@@ -212,7 +217,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
 
         try {
           // Load next continuous exercise instantly
-          const lang = userProgress.targetLanguage || 'English';
+          const lang = getTargetLangName();
           const nativeLangName = getNativeLangName();
           const nextExerciseType = (dailyExercise?.type || 'typing') as DailyExerciseType;
 
@@ -355,7 +360,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
     setLoadingExercise(true);
     setActiveModule(mod);
     try {
-      const lang = userProgress.targetLanguage || 'English';
+      const lang = getTargetLangName();
       const nativeLangName = getNativeLangName();
       const exercise = await aiPracticeService.generateModuleExercise(
         'typing', lang, mod, nativeLangName
@@ -370,7 +375,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
       setLoadingExercise(false);
       setExerciseModalOpen(true);
     }
-  }, [userProgress.targetLanguage, getNativeLangName]);
+  }, [getTargetLangName, getNativeLangName]);
 
   const renderModuleSections = () => {
     const proficiency = userProgress.proficiencyLevel || 'beginner';
@@ -631,7 +636,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ navigation, rout
           exerciseType={dailyExercise.type as DailyExerciseType}
           exercise={dailyExercise}
           onSubmit={handleExerciseSubmit}
-          targetLanguage={userProgress.targetLanguage || 'English'}
+          targetLanguage={getTargetLangName()}
           currentExerciseIndex={currentLessonId ? currentExerciseIndex + 1 : undefined}
           totalExercises={currentLessonId ? activeLessonExercises.length : undefined}
         />

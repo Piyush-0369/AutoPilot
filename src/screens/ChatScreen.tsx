@@ -18,6 +18,7 @@ import { useModelService } from '../services/ModelService';
 import { useUserProgress } from '../services/UserProgressService';
 import { ChatMessageBubble, ChatMessage, ModelLoaderWidget } from '../components';
 import { RootStackParamList } from '../navigation/types';
+import { LANGUAGES } from '../data/languages';
 
 type ChatScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Chat'>;
@@ -26,6 +27,7 @@ type ChatScreenProps = {
 export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
   const modelService = useModelService();
   const { targetLanguage } = useUserProgress();
+  const targetLangName = LANGUAGES.find(l => l.code === targetLanguage || l.label === targetLanguage)?.label || targetLanguage || 'Spanish';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -198,13 +200,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ navigation }) => {
             <Text style={styles.emptyIcon}>🎓</Text>
           </View>
           <Text style={styles.emptyTitle}>
-            {targetLanguage ? `Practice ${targetLanguage}` : 'Language Tutor'}
+            {targetLangName ? `Practice ${targetLangName}` : 'Language Tutor'}
           </Text>
           <Text style={styles.emptySubtitle}>
             I'm here to help you learn! Ask me anything or try one of these:
           </Text>
           <View style={styles.suggestionsContainer}>
-            {renderSuggestionChip(`How do you say "Hello" in ${targetLanguage || 'Spanish'}?`)}
+            {renderSuggestionChip(`How do you say "Hello" in ${targetLangName || 'Spanish'}?`)}
             {renderSuggestionChip('Teach me 3 useful travel phrases')}
             {renderSuggestionChip(`Correct my grammar: "Me gusta el gato"`)}
             {renderSuggestionChip('Explain the difference between Ser and Estar')}

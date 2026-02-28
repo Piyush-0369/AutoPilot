@@ -20,6 +20,7 @@ import { AILearningBuddyCard } from '../components/AILearningBuddyCard';
 import { DailyExerciseType } from '../components/ExerciseModal';
 import { useUserProgress } from '../services/UserProgressService';
 import { AppColors } from '../theme';
+import { LANGUAGES } from '../data/languages';
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
@@ -89,7 +90,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <AIRecommendationCard
           title="AI Recommendation"
-          subtitle={`Practice ${userProgress.targetLanguage || 'English'} to unlock the next skill level.`}
+          subtitle={`Practice ${LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage)?.label || userProgress.targetLanguage || 'English'} to unlock the next skill level.`}
         />
 
         <View style={{ marginTop: 20 }}>

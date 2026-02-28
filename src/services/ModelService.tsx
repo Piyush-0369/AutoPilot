@@ -16,19 +16,19 @@ export const TTS_VOICES = {
     url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-en_US-lessac-medium.tar.gz',
   },
   es: {
-    id: 'vits-piper-es_ES-carlfm-medium',
+    id: 'vits-piper-es_ES-davefx-medium',
     name: 'Spanish',
-    url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-es_ES-carlfm-medium.tar.gz',
+    url: 'https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-es_ES-davefx-medium.tar.bz2',
   },
   fr: {
     id: 'vits-piper-fr_FR-siwis-medium',
     name: 'French',
-    url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-fr_FR-siwis-medium.tar.gz',
+    url: 'https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-fr_FR-siwis-medium.tar.bz2',
   },
   de: {
     id: 'vits-piper-de_DE-thorsten-medium',
     name: 'German',
-    url: 'https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-de_DE-thorsten-medium.tar.gz',
+    url: 'https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-de_DE-thorsten-medium.tar.bz2',
   },
 };
 

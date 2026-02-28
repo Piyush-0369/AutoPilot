@@ -18,6 +18,7 @@ import { useModelService } from '../services/ModelService';
 import { useUserProgress } from '../services/UserProgressService';
 import { aiPracticeService } from '../services/AIPracticeService';
 import { ModelLoaderWidget, AudioVisualizer, FeedbackModal } from '../components';
+import { LANGUAGES } from '../data/languages';
 import { RootStackParamList } from '../navigation/types';
 
 type ConversationPracticeScreenProps = {
@@ -150,7 +151,7 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
     setStatus('Starting...');
     conversationTurnsRef.current = 0;
 
-    const targetLanguage = userProgress.targetLanguage || 'Spanish';
+    const targetLanguage = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage)?.label || userProgress.targetLanguage || 'Spanish';
 
     // Customize prompt to handle language limitations (English models)
     const enhancedPrompt = `${selectedScenario.prompt}. 
@@ -203,7 +204,7 @@ export const ConversationPracticeScreen: React.FC<ConversationPracticeScreenProp
   const handleGenerateTopic = async () => {
     setIsGenerating(true);
     try {
-      const targetLang = userProgress.targetLanguage || 'Spanish';
+      const targetLang = LANGUAGES.find(l => l.code === userProgress.targetLanguage || l.label === userProgress.targetLanguage)?.label || userProgress.targetLanguage || 'Spanish';
       const result = await aiPracticeService.generateConversationTopic(targetLang);
 
       if (result) {
